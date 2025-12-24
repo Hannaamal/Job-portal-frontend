@@ -1,0 +1,62 @@
+"use client";
+
+import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
+import { Job } from "@/types/job";
+
+interface Props {
+  job: Job;
+  active: boolean;
+  onSelect: () => void;
+}
+
+export default function JobCard({ job, active, onSelect }: Props) {
+  return (
+    <div
+      onClick={onSelect}
+      className={`cursor-pointer border rounded-lg p-4 bg-white transition hover:shadow
+        ${active ? "border-blue-600 bg-blue-50" : "border-gray-200"}
+      `}
+    >
+      {/* Header */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="font-semibold text-lg text-gray-900">
+            {job.title || "Untitled role"}
+          </h3>
+
+          <p className="text-sm text-gray-600">
+            {job.company?.name || "Company not disclosed"}
+          </p>
+
+          <p className="text-sm text-gray-500">
+            {job.location || "Location not specified"}
+          </p>
+        </div>
+
+        <BookmarkBorderIcon className="text-gray-400 hover:text-blue-600" />
+      </div>
+
+      {/* Tags */}
+      <div className="mt-3 flex gap-2 text-xs">
+        {job.jobType && (
+          <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
+            {job.jobType}
+          </span>
+        )}
+
+        {job.experienceLevel && (
+          <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
+            {job.experienceLevel}
+          </span>
+        )}
+      </div>
+
+      {/* Salary */}
+      {(job.salaryRange?.min || job.salaryRange?.max) && (
+        <p className="text-sm mt-2 text-gray-700">
+          ₹{job.salaryRange?.min ?? "—"} - ₹{job.salaryRange?.max ?? "—"}
+        </p>
+      )}
+    </div>
+  );
+}
