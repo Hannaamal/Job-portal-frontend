@@ -39,9 +39,7 @@ export const fetchJobById = createAsyncThunk(
       const res = await api.get(`/api/job/${jobId}`);
       return res.data;
     } catch (err: any) {
-      return rejectWithValue(
-        err.response?.data?.message || err.message
-      );
+      return rejectWithValue(err.response?.data?.message || err.message);
     }
   }
 );
@@ -59,9 +57,34 @@ export const createJob = createAsyncThunk(
       });
       return res.data.job;
     } catch (err: any) {
-      return rejectWithValue(
-        err.response?.data?.message || err.message
-      );
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
+export const applyJob = createAsyncThunk(
+  "jobs/apply",
+  async (jobId: string, { rejectWithValue }) => {
+    try {
+      const res = await api.post(`/api/job-application/${jobId}/apply`);
+      return { jobId };
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message);
+    }
+  }
+);
+
+
+
+
+export const fetchJobsByCompany = createAsyncThunk(
+  "jobs/fetchByCompany",
+  async (companyId: string, { rejectWithValue }) => {
+    try {
+      const res = await api.get(`/api/job/company/${companyId}`);
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || err.message);
     }
   }
 );
@@ -75,7 +98,7 @@ interface JobsState {
   selectedJob: any | null;
   loading: boolean;
   error: string | null;
-   page: number;
+  page: number;
   pages: number;
 }
 
@@ -141,6 +164,19 @@ const jobsSlice = createSlice({
         state.jobs.unshift(action.payload);
       })
       .addCase(createJob.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // jobByCompanyId
+      .addCase(fetchJobsByCompany.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchJobsByCompany.fulfilled, (state, action) => {
+        state.loading = false;
+        state.jobs = action.payload;
+      })
+      .addCase(fetchJobsByCompany.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

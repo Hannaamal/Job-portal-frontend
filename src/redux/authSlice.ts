@@ -20,7 +20,6 @@ const initialState: AuthState = {
   error: null,
 };
 
-
 // ------------------------ SIGNUP API ------------------------
 export const signupUser = createAsyncThunk(
   "auth/signup",
@@ -29,7 +28,7 @@ export const signupUser = createAsyncThunk(
       const res = await api.post("/api/auth/register", formData);
 
       const token = res.data.accessToken;
-       const role = res.data.userRole;   
+      const role = res.data.userRole;
       const user = res.data.data;
 
       Cookies.set("auth_token", token, { path: "/" });
@@ -68,6 +67,17 @@ export const loginUser = createAsyncThunk(
     }
   }
 );
+export const fetchMe = createAsyncThunk(
+  "auth/me",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await api.get("/api/auth/me");
+      return res.data.user;
+    } catch (err: any) {
+      return rejectWithValue("Not authenticated");
+    }
+  }
+);
 
 // ------------------------ LOGOUT API ------------------------
 
@@ -88,14 +98,12 @@ const authSlice = createSlice({
       .addCase(signupUser.pending, (state) => {
         state.loading = true;
         state.error = null;
-        
       })
       .addCase(signupUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.role = action.payload.role;
-        
       })
       .addCase(signupUser.rejected, (state, action: any) => {
         state.loading = false;
@@ -116,6 +124,15 @@ const authSlice = createSlice({
       .addCase(loginUser.rejected, (state, action: any) => {
         state.loading = false;
         state.error = action.payload;
+      })
+
+      //Me
+
+      .addCase(fetchMe.fulfilled, (state, action) => {
+        state.user = action.payload;
+      })
+      .addCase(fetchMe.rejected, (state) => {
+        state.user = null;
       })
 
       /* LOGOUT */

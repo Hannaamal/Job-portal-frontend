@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCompanyById } from "@/redux/company/companySlice";
+import { fetchJobs, fetchJobsByCompany } from "@/redux/jobs/jobsSlice";
 import { RootState, AppDispatch } from "@/redux/store";
 import SubscribeButton from "@/components/Company/SubscribeButton"; // import your button
 
@@ -14,9 +15,15 @@ export default function CompanyProfilePage() {
   const { selectedCompany, loading } = useSelector(
     (state: RootState) => state.company
   );
+  const { jobs, loading: jobsLoading } = useSelector(
+    (state: RootState) => state.jobs
+  );
 
   useEffect(() => {
-    if (id) dispatch(fetchCompanyById(id as string));
+    if (id) {
+      dispatch(fetchCompanyById(id as string));
+      dispatch(fetchJobsByCompany(id as string));
+    }
   }, [id, dispatch]);
 
   if (loading || !selectedCompany) return <p>Loading...</p>;
@@ -39,6 +46,7 @@ export default function CompanyProfilePage() {
         </div>
 
         {/* Subscribe/Unsubscribe Button */}
+
         <SubscribeButton
           companyId={selectedCompany._id}
           initialSubscribed={selectedCompany.isSubscribed}
@@ -53,15 +61,15 @@ export default function CompanyProfilePage() {
 
       {/* JOBS */}
       <section className="mt-10">
-        <h2 className="text-xl font-semibold mb-4">
-          Jobs ({selectedCompany.jobs.length})
-        </h2>
+        <h2 className="text-xl font-semibold mb-4">Jobs ({jobs.length})</h2>
 
-        {selectedCompany.jobs.length === 0 ? (
+        {jobsLoading ? (
+          <p>Loading jobs...</p>
+        ) : jobs.length === 0 ? (
           <p>No jobs posted yet</p>
         ) : (
           <div className="space-y-4">
-            {selectedCompany.jobs.map((job: any) => (
+            {jobs.map((job: any) => (
               <div key={job._id} className="border p-4 rounded hover:shadow">
                 <h3 className="font-bold">{job.title}</h3>
                 <p className="text-gray-600">{job.location}</p>
