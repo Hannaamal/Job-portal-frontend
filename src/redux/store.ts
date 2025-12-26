@@ -3,13 +3,17 @@ import jobsReducer from "./jobs/jobsSlice";
 import companyReducer from "./company/companySlice"
 import jobApplicationReducer from "./jobs/jobApplicationSlice"
 import authReducer from "./authSlice"
+import myApplicationsReducer from "./jobs/jobApplicationSlice"
+import profileReducer from "./profileSlice"
 
 export const store = configureStore({
   reducer: {
-     auth: authReducer,    
+    auth: authReducer,    
     jobs: jobsReducer,
     company: companyReducer,
     jobApplication: jobApplicationReducer,
+    myApplications: myApplicationsReducer,
+    profile: profileReducer,
   },
 });
 

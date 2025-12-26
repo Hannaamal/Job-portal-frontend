@@ -1,4 +1,4 @@
-interface JobApplication {
+export interface JobApplication {
   _id: string;
   job: string;
   applicant: string;
@@ -7,3 +7,36 @@ interface JobApplication {
   status: string;
   createdAt: string;
 }
+
+export interface Job {
+  _id: string;
+  title: string;
+  location: string;
+  jobType?: string;
+  experienceLevel?: string;
+  description?: string;
+}
+
+export interface Company {
+  _id: string;
+  name: string;
+}
+
+export interface Application {
+  _id: string;
+  job: {
+    _id: string;
+    title: string;
+    location: string;
+  };
+  company: {
+    _id: string;
+    name: string;
+  };
+  resume: string;
+  experience: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+

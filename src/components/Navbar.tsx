@@ -87,7 +87,7 @@ export default function Navbar() {
           <MenuItem
             onClick={handleMenuClose}
             component={Link}
-            href="/my-subscriptions"
+            href="/companies/my-subscriptions"
           >
             <ListItemIcon>
               <SubscriptionsIcon fontSize="small" />
@@ -98,7 +98,7 @@ export default function Navbar() {
           <MenuItem
             onClick={handleMenuClose}
             component={Link}
-            href="/applied-jobs"
+            href="/job/my-application"
           >
             <ListItemIcon>
               <WorkIcon fontSize="small" />

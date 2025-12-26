@@ -47,17 +47,20 @@ export const updateCompany = createAsyncThunk(
 );
 
 // Fetch user subscriptions
+// redux/company/companySlice.ts
 export const fetchSubscriptions = createAsyncThunk(
   "company/fetchSubscriptions",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await api.get("/api/company/subscriptions/my");
-      return res.data;
+      // Use correct backend route
+      const res = await api.get("/api/company-subscriptions/my", { withCredentials: true });
+      return res.data; // this returns [{ company: {...}, ... }]
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
   }
 );
+
 //  Subscribe to company
 export const subscribeCompany = createAsyncThunk(
   "company/subscribe",
@@ -118,7 +121,7 @@ const companySlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      /* FETCH ALL */
+      /* FETCH ALL Xompany */
       .addCase(fetchCompanies.pending, (state) => {
         state.loading = true;
       })
@@ -131,7 +134,7 @@ const companySlice = createSlice({
         state.error = action.payload as string;
       })
 
-      /* FETCH BY ID */
+      /* FETCH BY ID  company*/
       .addCase(fetchCompanyById.pending, (state) => {
         state.loading = true;
       })
@@ -144,7 +147,7 @@ const companySlice = createSlice({
         state.error = action.payload as string;
       })
 
-      //update
+      //update company
       .addCase(updateCompany.fulfilled, (state, action) => {
         // Update selected company
         if (
@@ -161,9 +164,12 @@ const companySlice = createSlice({
         if (index !== -1) state.companies[index] = action.payload;
       })
 
+
+
       /* SUBSCRIPTIONS */
-      .addCase(fetchSubscriptions.pending, (state) => {
+       .addCase(fetchSubscriptions.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(fetchSubscriptions.fulfilled, (state, action) => {
         state.loading = false;
