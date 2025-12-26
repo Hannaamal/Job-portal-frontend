@@ -1,31 +1,48 @@
-import { checkJobApplied } from "@/redux/jobs/jobApplicationSlice";
-import { AppDispatch, RootState } from "@/redux/store";
-import { Router } from "next/router";
+"use client";
+
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
+import { checkJobApplied } from "@/redux/jobs/jobApplicationSlice";
+import { RootState, AppDispatch } from "@/redux/store";
 
-export default function JobApplyButton({ jobId }: { jobId: string }) {
+interface JobApplyButtonProps {
+  jobId: string;
+}
+
+export default function JobApplyButton({ jobId }: JobApplyButtonProps) {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+
   const { appliedJobs, loading } = useSelector(
     (state: RootState) => state.jobApplication
   );
 
-  const applied = appliedJobs[jobId]?.applied;
+  // Check if this job is applied (default false until loaded)
+  const applied = appliedJobs[jobId]?.applied ?? false;
 
   useEffect(() => {
     dispatch(checkJobApplied(jobId));
   }, [dispatch, jobId]);
 
+  
+  if (loading && appliedJobs[jobId] === undefined) return null; // or a skeleton
+
+
+  const handleClick = () => {
+    if (!applied && !loading) {
+      router.push(`/apply/${jobId}`);
+    }
+  };
+
   return (
     <button
       disabled={applied || loading}
-      onClick={() => router.push(`/apply/${jobId}`)}
+      onClick={handleClick}
       className={`w-full py-2 rounded-lg text-white
-        ${applied ? "bg-gray-400 cursor-not-allowed" : "bg-green-600"}`}
+        ${applied || loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-600"}`}
     >
-      {applied ? "Already Applied" : "Apply Job"}
+      {loading ? "Checking..." : applied ? "Already Applied" : "Apply Job"}
     </button>
   );
 }
