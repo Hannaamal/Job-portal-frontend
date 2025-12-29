@@ -65,7 +65,7 @@ export default function AuthPage() {
       login(data.token, data.user);
 
       if (data.user.role === "admin") {
-        router.push("/admin");
+        router.push("/admin/dashboard");
       } else {
         router.push("/");
       }

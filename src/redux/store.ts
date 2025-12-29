@@ -5,6 +5,9 @@ import jobApplicationReducer from "./jobs/jobApplicationSlice"
 import authReducer from "./authSlice"
 import myApplicationsReducer from "./jobs/jobApplicationSlice"
 import profileReducer from "./profileSlice"
+import jobCreateReducer from "./admin/JobSlice"
+import adminJobsSliceReducer from "./admin/jobPageSlice"
+import adminCompanySliceReducer from "./admin/companySlice"
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +17,9 @@ export const store = configureStore({
     jobApplication: jobApplicationReducer,
     myApplications: myApplicationsReducer,
     profile: profileReducer,
+    jobCreate: jobCreateReducer,
+    adminJobs: adminJobsSliceReducer,
+    adminCompany:adminCompanySliceReducer
   },
 });
 

@@ -1,0 +1,182 @@
+// redux/admin/companyAdminSlice.ts
+import api from "@/lib/api";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+
+
+interface Company {
+  _id: string;
+  name: string;
+  email: string;
+  website: string;
+  logo?: string;
+}
+
+interface Subscriber {
+  _id: string;
+  name: string;
+  email: string;
+}
+
+interface CompanyAdminState {
+  companies: Company[];
+  subscribers: Subscriber[];
+  loading: boolean;
+  error: string | null;
+}
+
+const initialState: CompanyAdminState = {
+  companies: [],
+  subscribers: [],
+  loading: false,
+  error: null,
+};
+
+// Thunks
+export const fetchCompanies = createAsyncThunk(
+  "adminCompany/fetchCompanies",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get("/api/company/view");
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const addCompany = createAsyncThunk(
+  "adminCompany/addCompany",
+  async (formData: FormData, { rejectWithValue }) => {
+    try {
+      const { data } = await api.post("/api/company/add", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const updateCompany = createAsyncThunk(
+  "adminCompany/updateCompany",
+  async ({ id, formData }: { id: string; formData: FormData }, { rejectWithValue }) => {
+    try {
+      const { data } = await api.put(`/api/company/update/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const deleteCompany = createAsyncThunk(
+  "adminCompany/deleteCompany",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await api.put(`/api/company/delete/${id}`);
+      return id;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const fetchSubscribers = createAsyncThunk(
+  "adminCompany/fetchSubscribers",
+  async (companyId: string, { rejectWithValue }) => {
+    try {
+      const { data } = await api.get(`/api/admin/company/${companyId}/subscribers`);
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+// Slice
+const companyAdminSlice = createSlice({
+  name: "adminCompany",
+  initialState,
+  reducers: {
+    clearSubscribers: (state) => {
+      state.subscribers = [];
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      // fetchCompanies
+      .addCase(fetchCompanies.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCompanies.fulfilled, (state, action) => {
+        state.loading = false;
+        state.companies = action.payload;
+      })
+      .addCase(fetchCompanies.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // addCompany
+      .addCase(addCompany.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(addCompany.fulfilled, (state, action) => {
+        state.loading = false;
+        state.companies.push(action.payload);
+      })
+      .addCase(addCompany.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // updateCompany
+      .addCase(updateCompany.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateCompany.fulfilled, (state, action) => {
+        state.loading = false;
+        state.companies = state.companies.map((c) =>
+          c._id === action.payload._id ? action.payload : c
+        );
+      })
+      .addCase(updateCompany.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // deleteCompany
+      .addCase(deleteCompany.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteCompany.fulfilled, (state, action) => {
+        state.loading = false;
+        state.companies = state.companies.filter((c) => c._id !== action.payload);
+      })
+      .addCase(deleteCompany.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // fetchSubscribers
+      .addCase(fetchSubscribers.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchSubscribers.fulfilled, (state, action) => {
+        state.loading = false;
+        state.subscribers = action.payload;
+      })
+      .addCase(fetchSubscribers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
+  },
+});
+
+export const { clearSubscribers } = companyAdminSlice.actions;
+
+export default companyAdminSlice.reducer;

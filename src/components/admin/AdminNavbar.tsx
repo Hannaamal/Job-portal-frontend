@@ -1,0 +1,56 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard,
+  Briefcase,
+  Building2,
+  Users,
+} from "lucide-react";
+
+export default function AdminNavbar() {
+  const pathname = usePathname();
+
+  const links = [
+    { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+    { name: "Jobs", href: "/admin/jobs", icon: Briefcase },
+    { name: "Companies", href: "/admin/companies", icon: Building2 },
+    { name: "Users", href: "/admin/users", icon: Users },
+  ];
+
+  return (
+    <aside className="w-64 min-h-screen bg-white border-r">
+      {/* HEADER */}
+      <div className="h-16 flex items-center px-6 border-b">
+        <h1 className="text-xl font-bold text-blue-600">
+          Admin Panel
+        </h1>
+      </div>
+
+      {/* NAV LINKS */}
+      <nav className="p-4 space-y-1">
+        {links.map((item) => {
+          const Icon = item.icon;
+          const active = pathname.startsWith(item.href);
+
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium
+                ${
+                  active
+                    ? "bg-blue-100 text-blue-600"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+            >
+              <Icon size={18} />
+              {item.name}
+            </Link>
+          );
+        })}
+      </nav>
+    </aside>
+  );
+}

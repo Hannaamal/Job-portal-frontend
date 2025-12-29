@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import ReduxProvider from "@/components/ReduxProvider";
-import Navbar from "@/components/Navbar";
+import AppNavbar from "@/components/NavbarWrap";
+
+
 
 
 export const metadata: Metadata = {
@@ -14,13 +16,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+
   
  return (
     <html lang="en">
       <body>
+        
         <ReduxProvider>
-          <Navbar/> 
+          <AppNavbar> 
           {children}
+          </AppNavbar> 
         </ReduxProvider>
       </body>
     </html>
