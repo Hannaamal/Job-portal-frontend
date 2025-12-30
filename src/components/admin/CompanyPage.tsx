@@ -7,11 +7,11 @@ import { DataGrid, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import {
   fetchCompanies,
   deleteCompany,
-  fetchSubscribers,
   updateCompany,
-  clearSubscribers,
   addCompany,
 } from "@/redux/admin/companySlice";
+import { fetchSubscriberCount } from "@/redux/admin/companySlice";
+
 import {
   Container,
   Typography,
@@ -31,17 +31,15 @@ import {
   Tooltip,
   CircularProgress,
   Drawer,
+  Chip,
 } from "@mui/material";
 import { Edit, Delete, Visibility, Close } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
+import api from "@/lib/api";
 
 export default function AdminCompanyPage() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-
-  const { companies, loading, error } = useSelector(
-    (state: RootState) => state.adminCompany
-  );
 
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
   const [formData, setFormData] = useState({
@@ -53,6 +51,11 @@ export default function AdminCompanyPage() {
   });
   const [openViewDialog, setOpenViewDialog] = useState(false);
   const [viewCompany, setViewCompany] = useState<any>(null);
+  const { companies, loading, error, subscriberCounts } = useSelector(
+  (state: RootState) => state.adminCompany
+);
+
+
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<any>(null);
@@ -75,6 +78,13 @@ export default function AdminCompanyPage() {
   useEffect(() => {
     dispatch(fetchCompanies());
   }, [dispatch]);
+
+  useEffect(() => {
+  companies.forEach((company) => {
+    dispatch(fetchSubscriberCount(company._id));
+  });
+}, [companies, dispatch]);
+
 
   // Add Company
   // ======================
@@ -103,6 +113,10 @@ export default function AdminCompanyPage() {
       }
     };
   }, [addForm.logoPreview]);
+
+
+  
+
 
 
   //view company by id
@@ -151,7 +165,7 @@ export default function AdminCompanyPage() {
 
   const getCompanyLogo = (logo?: string) => {
     if (!logo) {
-      return `${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads/logos/default-logo.png`;
+      return `${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads/logos/default_logo.jpg`;
     }
 
     // If logo already includes '/uploads/logos/', return as is
@@ -179,14 +193,36 @@ export default function AdminCompanyPage() {
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.onerror = null;
-            target.src = `${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads/logos/default-logo.png`;
+            target.src = `${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads/logos/default_logo.jpg`;
           }}
         />
       ),
     },
+    
+    
     { field: "name", headerName: "Name", flex: 1, minWidth: 150 },
     { field: "email", headerName: "Email", flex: 1, minWidth: 180 },
     { field: "website", headerName: "Website", flex: 1, minWidth: 150 },
+
+    {
+  field: "subscribers",
+  headerName: "Subscribers",
+  width: 130,
+  align: "center",
+  headerAlign: "center",
+  renderCell: (params) => {
+    const count = subscriberCounts[params.row._id] ?? 0;
+
+    return (
+      <Chip
+        label={count}
+        size="small"
+        color={count > 0 ? "primary" : "default"}
+      />
+    );
+  },
+},
+
     {
       field: "actions",
       headerName: "Actions",
@@ -264,63 +300,7 @@ export default function AdminCompanyPage() {
       </Box>
       
 
-      {/* <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Logo</TableCell>
-            <TableCell>Name</TableCell>
-            <TableCell>Email</TableCell>
-            <TableCell>Website</TableCell>
-            <TableCell>Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {companies.map((company) => (
-            <TableRow key={company._id}>
-              <TableCell>
-                <img
-                  src={getCompanyLogo(company.logo)}
-                  alt={company.name}
-                  width={50}
-                  height={50}
-                  style={{ objectFit: "contain" }}
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.onerror = null;
-                    target.src = `${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads/logos/default_logo.jpg`;
-                  }}
-                />
-              </TableCell>
-              <TableCell>{company.name}</TableCell>
-              <TableCell>{company.email}</TableCell>
-              <TableCell>{company.website}</TableCell>
-              <TableCell>
-                <Tooltip title="View Company">
-                  <IconButton onClick={() => handleViewCompany(company)}>
-                    <Visibility />
-                  </IconButton>
-                </Tooltip>
-
-                <Tooltip title="Edit">
-                  <IconButton onClick={() => handleEdit(company)}>
-                    <Edit />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete">
-                  <IconButton
-                    onClick={() => {
-                      setCompanyToDelete(company);
-                      setOpenDeleteDialog(true);
-                    }}
-                  >
-                    <Delete />
-                  </IconButton>
-                </Tooltip>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table> */}
+      
 
       {/* view Company */}
 

@@ -1,6 +1,6 @@
 export interface JobApplication {
   _id: string;
-  job: string;
+   job: string | Job;   // ✅ FIX
   applicant: string;
   company: string;
   resume?: string | null;

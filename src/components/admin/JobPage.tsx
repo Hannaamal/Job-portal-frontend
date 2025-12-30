@@ -22,7 +22,6 @@ import {
 import api from "@/lib/api";
 import EditJobSlideOver from "@/components/admin/EditJobSlider";
 
-
 export default function AdminJobsPage() {
   const dispatch = useDispatch<AppDispatch>();
   const { jobs, loading } = useSelector((state: RootState) => state.adminJobs);
@@ -30,6 +29,8 @@ export default function AdminJobsPage() {
   const [editJob, setEditJob] = useState<any>(null);
   const [companies, setCompanies] = useState<any[]>([]);
   const [skills, setSkills] = useState<any[]>([]);
+  const [deleteJobId, setDeleteJobId] = useState<string | null>(null);
+  const [deleteJobTitle, setDeleteJobTitle] = useState<string>("");
 
   useEffect(() => {
     dispatch(fetchAdminJobs());
@@ -45,10 +46,22 @@ export default function AdminJobsPage() {
     fetchData();
   }, [dispatch]);
 
-  const handleDelete = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this job?")) {
-      dispatch(deleteJob(id));
+  const handleDeleteClick = (job: any) => {
+    setDeleteJobId(job._id);
+    setDeleteJobTitle(job.title);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deleteJobId) {
+      dispatch(deleteJob(deleteJobId));
     }
+    setDeleteJobId(null);
+    setDeleteJobTitle("");
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteJobId(null);
+    setDeleteJobTitle("");
   };
 
   const handleEditOpen = (job: any) => {
@@ -118,7 +131,7 @@ export default function AdminJobsPage() {
             <IconButton
               size="small"
               color="error"
-              onClick={() => handleDelete(params.row._id)}
+              onClick={() => handleDeleteClick(params.row)}
             >
               <Delete fontSize="small" />
             </IconButton>
@@ -147,86 +160,118 @@ export default function AdminJobsPage() {
         />
       </div>
 
-     {/* View Dialog */}
-<Dialog
-  open={Boolean(viewJob)}
-  onClose={() => setViewJob(null)}
-  fullWidth
-  maxWidth="sm"
->
-  <DialogTitle className="font-semibold">
-    {viewJob?.title}
-  </DialogTitle>
+      {/* View Dialog */}
+      <Dialog
+        open={Boolean(viewJob)}
+        onClose={() => setViewJob(null)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle className="font-semibold">{viewJob?.title}</DialogTitle>
 
-  <DialogContent dividers>
-    <Box className="space-y-3 text-sm">
+        <DialogContent dividers>
+          <Box className="space-y-3 text-sm">
+            {/* Company */}
+            <Box>
+              <b className="text-gray-600">Company</b>
+              <p>{viewJob?.company?.name || "—"}</p>
+            </Box>
 
-      {/* Company */}
-      <Box>
-        <b className="text-gray-600">Company</b>
-        <p>{viewJob?.company?.name || "—"}</p>
-      </Box>
+            {/* Type & Experience */}
+            <Box display="flex" gap={4}>
+              <Box>
+                <b className="text-gray-600">Job Type</b>
+                <p>{viewJob?.jobType || "—"}</p>
+              </Box>
 
-      {/* Type & Experience */}
-      <Box display="flex" gap={4}>
-        <Box>
-          <b className="text-gray-600">Job Type</b>
-          <p>{viewJob?.jobType || "—"}</p>
-        </Box>
+              <Box>
+                <b className="text-gray-600">Experience</b>
+                <p>{viewJob?.experienceLevel || "—"}</p>
+              </Box>
+            </Box>
 
-        <Box>
-          <b className="text-gray-600">Experience</b>
-          <p>{viewJob?.experienceLevel || "—"}</p>
-        </Box>
-      </Box>
+            {/* Skills */}
+            <Box>
+              <b className="text-gray-600">Skills Required</b>
+              <Box className="flex flex-wrap gap-1 mt-1">
+                {viewJob?.requiredSkills?.length ? (
+                  viewJob.requiredSkills.map((skill: any) => (
+                    <Chip
+                      key={skill._id}
+                      label={skill.name}
+                      size="small"
+                      variant="outlined"
+                    />
+                  ))
+                ) : (
+                  <span className="text-gray-500 text-xs">
+                    No skills specified
+                  </span>
+                )}
+              </Box>
+            </Box>
 
-      {/* Skills */}
-      <Box>
-        <b className="text-gray-600">Skills Required</b>
-        <Box className="flex flex-wrap gap-1 mt-1">
-          {viewJob?.requiredSkills?.length ? (
-            viewJob.requiredSkills.map((skill: any) => (
+            {/* Location */}
+            <Box>
+              <b className="text-gray-600">Location</b>
+              <p>{viewJob?.isRemote ? "Remote" : viewJob?.location || "—"}</p>
+            </Box>
+
+            {/* Status */}
+            <Box>
+              <b className="text-gray-600">Status</b>
               <Chip
-                key={skill._id}
-                label={skill.name}
                 size="small"
-                variant="outlined"
+                label={viewJob?.isActive ? "Active" : "Closed"}
+                color={viewJob?.isActive ? "success" : "default"}
+                className="ml-2"
               />
-            ))
-          ) : (
-            <span className="text-gray-500 text-xs">No skills specified</span>
-          )}
+            </Box>
+
+            {/* Description */}
+            <Box>
+              <b className="text-gray-600">Description</b>
+              <p className="text-gray-700 whitespace-pre-line mt-1">
+                {viewJob?.description || "—"}
+              </p>
+            </Box>
+          </Box>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={Boolean(deleteJobId)}
+        onClose={handleDeleteCancel}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle className="font-semibold">Delete Job</DialogTitle>
+
+        <DialogContent dividers>
+          <p className="text-sm text-gray-700">
+            Are you sure you want to delete the job <b>{deleteJobTitle}</b>?
+            <br />
+            <span className="text-red-600 text-xs">
+              This action cannot be undone.
+            </span>
+          </p>
+        </DialogContent>
+
+        <Box className="flex justify-end gap-2 px-4 py-3">
+          <button
+            onClick={handleDeleteCancel}
+            className="px-4 py-1.5 rounded-md text-sm border border-gray-300"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={handleDeleteConfirm}
+            className="px-4 py-1.5 rounded-md text-sm bg-red-600 text-white"
+          >
+            Delete
+          </button>
         </Box>
-      </Box>
-
-      {/* Location */}
-      <Box>
-        <b className="text-gray-600">Location</b>
-        <p>{viewJob?.isRemote ? "Remote" : viewJob?.location || "—"}</p>
-      </Box>
-
-      {/* Status */}
-      <Box>
-        <b className="text-gray-600">Status</b>
-        <Chip
-          size="small"
-          label={viewJob?.isActive ? "Active" : "Closed"}
-          color={viewJob?.isActive ? "success" : "default"}
-          className="ml-2"
-        />
-      </Box>
-
-      {/* Description */}
-      <Box>
-        <b className="text-gray-600">Description</b>
-        <p className="text-gray-700 whitespace-pre-line mt-1">
-          {viewJob?.description || "—"}
-        </p>
-      </Box>
-
-    </Box>
-  </DialogContent>
-</Dialog>
+      </Dialog>
 
       <EditJobSlideOver
         isOpen={Boolean(editJob)}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
@@ -17,11 +17,24 @@ import WorkIcon from "@mui/icons-material/Work";
 import AccountBoxIcon from "@mui/icons-material/AccountBox";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
+import {  useDispatch } from "react-redux";
+import {  AppDispatch } from "@/redux/store";
+import { fetchNotifications } from "@/redux/notificationSlice";
 
 export default function Navbar() {
+  const dispatch = useDispatch<AppDispatch>();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const router = useRouter();
+  const notifications = useSelector((state: RootState) => state.notifications.notifications);
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  useEffect(() => {
+    dispatch(fetchNotifications());
+  }, [dispatch]);
+
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -51,19 +64,23 @@ export default function Navbar() {
         <Link href="/companies" className="text-gray-700 hover:text-blue-600">
           Companies
         </Link>
-        <Link href="/salaries" className="text-gray-700 hover:text-blue-600">
+        {/* <Link href="/salaries" className="text-gray-700 hover:text-blue-600">
           Salaries
-        </Link>
+        </Link> */}
       </div>
 
       {/* Right */}
       <div className="flex items-center gap-6">
-        <button className="relative">
-          <NotificationsIcon />
+        <div className="flex items-center gap-6">
+      <Link href="/notifications" className="relative">
+        <NotificationsIcon className="text-gray-700" />
+        {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1 rounded-full">
-            1
+            {unreadCount}
           </span>
-        </button>
+        )}
+      </Link>
+    </div>
 
         {/* Account Icon with Dropdown */}
         <IconButton onClick={handleMenuOpen}>

@@ -73,7 +73,7 @@ export const deleteJob = createAsyncThunk(
   "adminJobs/delete",
   async (jobId: string, { rejectWithValue }) => {
     try {
-      await api.delete(`/api/job/delete/${jobId}`);
+      await api.put(`/api/job/delete/${jobId}`);
       return jobId;
     } catch (err: any) {
       return rejectWithValue(

@@ -2,7 +2,6 @@
 import api from "@/lib/api";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-
 interface Company {
   _id: string;
   name: string;
@@ -20,6 +19,7 @@ interface Subscriber {
 interface CompanyAdminState {
   companies: Company[];
   subscribers: Subscriber[];
+  subscriberCounts: Record<string, number>; // ✅ ADD THIS
   loading: boolean;
   error: string | null;
 }
@@ -27,6 +27,7 @@ interface CompanyAdminState {
 const initialState: CompanyAdminState = {
   companies: [],
   subscribers: [],
+  subscriberCounts: {}, // ✅
   loading: false,
   error: null,
 };
@@ -60,7 +61,10 @@ export const addCompany = createAsyncThunk(
 
 export const updateCompany = createAsyncThunk(
   "adminCompany/updateCompany",
-  async ({ id, formData }: { id: string; formData: FormData }, { rejectWithValue }) => {
+  async (
+    { id, formData }: { id: string; formData: FormData },
+    { rejectWithValue }
+  ) => {
     try {
       const { data } = await api.put(`/api/company/update/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -84,12 +88,18 @@ export const deleteCompany = createAsyncThunk(
   }
 );
 
-export const fetchSubscribers = createAsyncThunk(
-  "adminCompany/fetchSubscribers",
+export const fetchSubscriberCount = createAsyncThunk(
+  "adminCompany/fetchSubscriberCount",
   async (companyId: string, { rejectWithValue }) => {
     try {
-      const { data } = await api.get(`/api/admin/company/${companyId}/subscribers`);
-      return data;
+      const { data } = await api.get(
+        `/api/admin/company-subscriptions/${companyId}/subscribers`
+      );
+
+      return {
+        companyId,
+        count: data.totalSubscribers,
+      };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
@@ -155,24 +165,18 @@ const companyAdminSlice = createSlice({
       })
       .addCase(deleteCompany.fulfilled, (state, action) => {
         state.loading = false;
-        state.companies = state.companies.filter((c) => c._id !== action.payload);
+        state.companies = state.companies.filter(
+          (c) => c._id !== action.payload
+        );
       })
       .addCase(deleteCompany.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
-      // fetchSubscribers
-      .addCase(fetchSubscribers.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchSubscribers.fulfilled, (state, action) => {
-        state.loading = false;
-        state.subscribers = action.payload;
-      })
-      .addCase(fetchSubscribers.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
+      // fetchSubscriberCount
+      .addCase(fetchSubscriberCount.fulfilled, (state, action) => {
+        const { companyId, count } = action.payload;
+        state.subscriberCounts[companyId] = count;
       });
   },
 });

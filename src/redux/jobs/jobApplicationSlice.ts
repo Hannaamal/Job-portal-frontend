@@ -4,11 +4,11 @@ import { JobApplication } from "@/types/jobApplication";
 // or same file
 
 export const checkJobApplied = createAsyncThunk<
-  { applied: boolean; status: string | null },
+  { jobId: string; applied: boolean; status: string | null },
   string
 >("jobApplication/checkJobApplied", async (jobId) => {
   const res = await api.get(`/api/application/check/${jobId}`);
-  return { jobId, ...res.data }; // 👈 include jobId
+  return { jobId, ...res.data }; // jobId is now typed
 });
 
 export const applyForJob = createAsyncThunk<
@@ -73,7 +73,11 @@ const jobApplicationSlice = createSlice({
       .addCase(applyForJob.fulfilled, (state, action) => {
         state.loading = false;
 
-        const jobId = action.payload.job;
+        // Extract job ID as string
+        const jobId =
+          typeof action.payload.job === "string"
+            ? action.payload.job
+            : action.payload.job._id;
 
         state.appliedJobs[jobId] = {
           applied: true,
@@ -82,6 +86,7 @@ const jobApplicationSlice = createSlice({
 
         state.applications.push(action.payload);
       })
+
       .addCase(applyForJob.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload ?? "Something went wrong";

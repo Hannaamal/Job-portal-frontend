@@ -32,13 +32,18 @@ export const withdrawApplication = createAsyncThunk(
   "applications/withdrawApplication",
   async (jobId: string, { rejectWithValue }) => {
     try {
-      await api.delete(`/api/jobs/${jobId}/withdraw`, { withCredentials: true });
+      const res = await api.put(
+        `/api/application/withdraw/${jobId}`,
+        {}, // no body needed
+        { withCredentials: true }
+      );
       return jobId;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || "Failed to withdraw application");
     }
   }
 );
+
 
 const myApplicationsSlice = createSlice({
   name: "myApplications",
