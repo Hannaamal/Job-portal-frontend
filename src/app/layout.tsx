@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import ReduxProvider from "@/components/ReduxProvider";
 import AppNavbar from "@/components/NavbarWrap";
+import { AuthProvider } from "@/Context/AuthContext";
 
 
 
@@ -24,9 +25,11 @@ export default function RootLayout({
       <body>
         
         <ReduxProvider>
-          <AppNavbar> 
-          {children}
-          </AppNavbar> 
+           <AuthProvider> 
+             <AppNavbar> 
+              {children}
+             </AppNavbar> 
+           </AuthProvider> 
         </ReduxProvider>
       </body>
     </html>

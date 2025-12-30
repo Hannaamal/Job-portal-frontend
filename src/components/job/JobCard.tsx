@@ -2,6 +2,12 @@
 
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import { Job } from "@/types/job";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "@/redux/store";
+import { saveJob, removeSavedJob, fetchSavedJobs } from "@/redux/jobs/saveJobSlice";
+import { useEffect } from "react";
+import { BookmarkIcon } from "lucide-react";
+
 
 interface Props {
   job: Job;
@@ -9,7 +15,26 @@ interface Props {
   onSelect: () => void;
 }
 
+
 export default function JobCard({ job, active, onSelect }: Props) {
+ const dispatch = useDispatch<AppDispatch>();
+  const savedJobs = useSelector((state: RootState) => state.savedJobs.savedJobs);
+
+  const isSaved = savedJobs.some((s) => s.job._id === job._id);
+
+  useEffect(() => {
+    dispatch(fetchSavedJobs());
+  }, [dispatch]);
+
+  const handleToggleSave = (e: React.MouseEvent) => {
+    e.stopPropagation(); // prevent triggering onSelect
+    if (isSaved) {
+      dispatch(removeSavedJob(job._id));
+    } else {
+      dispatch(saveJob(job._id));
+    }
+  };
+
   return (
     <div
       onClick={onSelect}
@@ -33,7 +58,14 @@ export default function JobCard({ job, active, onSelect }: Props) {
           </p>
         </div>
 
-        <BookmarkBorderIcon className="text-gray-400 hover:text-blue-600" />
+         {/* Bookmark */}
+        <div onClick={handleToggleSave} className="cursor-pointer">
+          {isSaved ? (
+            <BookmarkIcon className="text-blue-600" />
+          ) : (
+            <BookmarkBorderIcon className="text-gray-400" />
+          )}
+        </div>
       </div>
 
       {/* Tags */}

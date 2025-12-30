@@ -88,10 +88,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Logout
   const logout = () => {
-    Cookies.remove("auth_token");
-    setToken(null);
-    setUser(null);
-  };
+  Cookies.remove("auth_token", { path: "/" });
+  setToken(null);
+  setUser(null);
+};
 
   return (
     <AuthContext.Provider
