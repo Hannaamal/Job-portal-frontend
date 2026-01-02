@@ -2,92 +2,89 @@
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "@/lib/api";
-import Cookies from "js-cookie";
 
 interface AuthState {
   user: any | null;
-  token: string | null;
   role: string | null;
   loading: boolean;
+  isAuthenticated: boolean;
   error: string | null;
 }
 
 const initialState: AuthState = {
   user: null,
-  token: Cookies.get("auth_token") || null,
-  role: Cookies.get("role") || null,
+  role: null,
   loading: false,
+  isAuthenticated: false,
   error: null,
 };
 
-// ------------------------ SIGNUP API ------------------------
+/* ======================
+   SIGNUP
+====================== */
 export const signupUser = createAsyncThunk(
   "auth/signup",
-  async (formData, thunkAPI) => {
+  async (formData: any, { rejectWithValue }) => {
     try {
       const res = await api.post("/api/auth/register", formData);
-
-      const token = res.data.accessToken;
-      const role = res.data.userRole;
-      const user = res.data.data;
-
-      Cookies.set("auth_token", token, { path: "/" });
-      Cookies.set("role", role, { path: "/" });
-
-      return { user, token, role };
-    } catch (error: any) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Signup failed"
+      return res.data.user; // backend sends user
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || "Signup failed"
       );
     }
   }
 );
 
-// ------------------------ LOGIN API ------------------------
-
+/* ======================
+   LOGIN
+====================== */
 export const loginUser = createAsyncThunk(
   "auth/login",
-  async (formData, thunkAPI) => {
+  async (formData: any, { rejectWithValue }) => {
     try {
       const res = await api.post("/api/auth/login", formData);
-
-      const token = res.data.accessToken;
-      const role = res.data.userRole;
-      const user = res.data.data;
-
-      // Save in cookies
-      Cookies.set("auth_token", token, { path: "/" });
-      Cookies.set("role", role, { path: "/" });
-
-      return { user, token, role };
+      return res.data.user; // token is in httpOnly cookie
     } catch (err: any) {
-      return thunkAPI.rejectWithValue(
+      return rejectWithValue(
         err.response?.data?.message || "Login failed"
       );
     }
   }
 );
+
+/* ======================
+   FETCH ME
+====================== */
 export const fetchMe = createAsyncThunk(
   "auth/me",
   async (_, { rejectWithValue }) => {
     try {
       const res = await api.get("/api/auth/me");
       return res.data.user;
-    } catch (err: any) {
+    } catch {
       return rejectWithValue("Not authenticated");
     }
   }
 );
 
-// ------------------------ LOGOUT API ------------------------
+/* ======================
+   LOGOUT
+====================== */
+export const logoutUser = createAsyncThunk(
+  "auth/logout",
+  async (_, { rejectWithValue }) => {
+    try {
+      await api.post("/api/auth/logout"); // backend clears cookie
+      return true;
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || "Logout failed"
+      );
+    }
+  }
+);
 
-export const logoutUser = createAsyncThunk("auth/logoutUser", async () => {
-  Cookies.remove("auth_token", { path: "/" });
-  Cookies.remove("role", { path: "/" });
-  return true;
-});
-
-// -------------------- AUTH SLICE  --------------------
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -97,51 +94,51 @@ const authSlice = createSlice({
       /* SIGNUP */
       .addCase(signupUser.pending, (state) => {
         state.loading = true;
-        state.error = null;
       })
       .addCase(signupUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
+        state.user = action.payload;
         state.role = action.payload.role;
+        state.isAuthenticated = true;
       })
-      .addCase(signupUser.rejected, (state, action: any) => {
+      .addCase(signupUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload as string;
       })
 
       /* LOGIN */
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
-        state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
+        state.user = action.payload;
         state.role = action.payload.role;
+        state.isAuthenticated = true;
       })
-      .addCase(loginUser.rejected, (state, action: any) => {
+      .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload as string;
       })
 
-      //Me
-
+      /* ME */
       .addCase(fetchMe.fulfilled, (state, action) => {
         state.user = action.payload;
+        state.role = action.payload.role;
+        state.isAuthenticated = true;
       })
       .addCase(fetchMe.rejected, (state) => {
         state.user = null;
+        state.role = null;
+        state.isAuthenticated = false;
       })
 
       /* LOGOUT */
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
-        state.token = null;
         state.role = null;
+        state.isAuthenticated = false;
         state.loading = false;
-        state.error = null;
       });
   },
 });

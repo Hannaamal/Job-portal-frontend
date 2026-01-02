@@ -89,9 +89,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Logout
   const logout = () => {
   Cookies.remove("auth_token", { path: "/" });
+  Cookies.remove("user_role", { path: "/" });
   setToken(null);
   setUser(null);
 };
+
 
   return (
     <AuthContext.Provider

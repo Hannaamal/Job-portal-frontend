@@ -136,9 +136,9 @@ const companyAdminSlice = createSlice({
         state.error = null;
       })
       .addCase(addCompany.fulfilled, (state, action) => {
-        state.loading = false;
-        state.companies.push(action.payload);
+        state.companies.push(action.payload.company);
       })
+
       .addCase(addCompany.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;

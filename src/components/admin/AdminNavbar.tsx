@@ -17,6 +17,7 @@ export default function AdminNavbar() {
     { name: "Jobs", href: "/admin/jobs", icon: Briefcase },
     { name: "Companies", href: "/admin/companies", icon: Building2 },
     { name: "Users", href: "/admin/users", icon: Users },
+    { name: "Applications", href: "/admin/applications", icon: Users },
   ];
 
   return (

@@ -22,6 +22,7 @@ import { fetchNotifications } from "@/redux/notificationSlice";
 import { fetchSavedJobs } from "@/redux/jobs/saveJobSlice";
 import { BookmarkIcon } from "lucide-react";
 import { useAuth } from "@/Context/AuthContext";
+import { logoutUser } from "@/redux/authSlice";
 
 export default function Navbar() {
   const dispatch = useDispatch<AppDispatch>();
@@ -53,10 +54,12 @@ export default function Navbar() {
   // ✅ Prevent flicker
   if (loading) return null;
 
-  const handleLogout = () => {
-    logout(); // ✅ clears cookie + state
-    router.push("/register");
-  };
+  const handleLogout = async () => {
+  await dispatch(logoutUser()).unwrap(); // ensures success
+  router.replace("/register");           // 👈 replace, NOT push
+};
+
+
 
   return (
     <nav className="flex items-center justify-between px-8 py-4 bg-white shadow-sm">
@@ -145,6 +148,8 @@ export default function Navbar() {
           </ListItemIcon>
           Applied Jobs
         </MenuItem>
+
+        
 
         <Divider />
 

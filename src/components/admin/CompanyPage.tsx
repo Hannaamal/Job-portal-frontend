@@ -23,11 +23,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   Tooltip,
   CircularProgress,
   Drawer,
@@ -52,10 +47,8 @@ export default function AdminCompanyPage() {
   const [openViewDialog, setOpenViewDialog] = useState(false);
   const [viewCompany, setViewCompany] = useState<any>(null);
   const { companies, loading, error, subscriberCounts } = useSelector(
-  (state: RootState) => state.adminCompany
-);
-
-
+    (state: RootState) => state.adminCompany
+  );
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<any>(null);
@@ -80,8 +73,12 @@ export default function AdminCompanyPage() {
   }, [dispatch]);
 
   useEffect(() => {
+  if (!companies || companies.length === 0) return;
+
   companies.forEach((company) => {
-    dispatch(fetchSubscriberCount(company._id));
+    if (company?._id) {
+      dispatch(fetchSubscriberCount(company._id));
+    }
   });
 }, [companies, dispatch]);
 
@@ -97,14 +94,20 @@ export default function AdminCompanyPage() {
     if (addForm.logo) formData.append("logo", addForm.logo);
 
     dispatch(addCompany(formData))
-  .unwrap()
-  .then(() => {
-    dispatch(fetchCompanies()); // <-- reload companies
-    setOpenAddDrawer(false);
-    setAddForm({ name: "", email: "", website: "", location: "", logo: null, logoPreview: "" });
-  })
-  .catch(err => console.error(err));
-
+      .unwrap()
+      .then(() => {
+        dispatch(fetchCompanies()); // <-- reload companies
+        setOpenAddDrawer(false);
+        setAddForm({
+          name: "",
+          email: "",
+          website: "",
+          location: "",
+          logo: null,
+          logoPreview: "",
+        });
+      })
+      .catch((err) => console.error(err));
   };
   useEffect(() => {
     return () => {
@@ -113,11 +116,6 @@ export default function AdminCompanyPage() {
       }
     };
   }, [addForm.logoPreview]);
-
-
-  
-
-
 
   //view company by id
   const handleViewCompany = (company: any) => {
@@ -129,12 +127,13 @@ export default function AdminCompanyPage() {
   const handleEdit = (company: any) => {
     setSelectedCompany(company);
     setFormData({
-      name: company.name,
-      email: company.email,
-      website: company.website,
+      name: company.name ?? "",
+      email: company.email ?? "",
+      website: company.website ?? "",
       logoPreview: getCompanyLogo(company.logo),
-      location: company.location,
+      location: company.location ?? "",
     });
+
     setOpenEditDialog(true);
   };
 
@@ -153,14 +152,13 @@ export default function AdminCompanyPage() {
     }
 
     dispatch(updateCompany({ id: selectedCompany._id, formData: form }))
-  .unwrap()
-  .then((updatedCompany) => {
-    // update the local Redux state
-    dispatch(fetchCompanies()); // reload or handle slice state update
-    setOpenEditDialog(false);
-  })
-  .catch(err => console.error(err));
-
+      .unwrap()
+      .then((updatedCompany) => {
+        // update the local Redux state
+        dispatch(fetchCompanies()); // reload or handle slice state update
+        setOpenEditDialog(false);
+      })
+      .catch((err) => console.error(err));
   };
 
   const getCompanyLogo = (logo?: string) => {
@@ -177,7 +175,6 @@ export default function AdminCompanyPage() {
     return `${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads/logos/${logo}`;
   };
 
-
   // DataGrid columns
   const columns: GridColDef[] = [
     {
@@ -189,7 +186,12 @@ export default function AdminCompanyPage() {
         <img
           src={getCompanyLogo(params.value as string)}
           alt="logo"
-          style={{ width: 50, height: 50, objectFit: "contain", borderRadius: 4 }}
+          style={{
+            width: 50,
+            height: 50,
+            objectFit: "contain",
+            borderRadius: 4,
+          }}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.onerror = null;
@@ -198,30 +200,29 @@ export default function AdminCompanyPage() {
         />
       ),
     },
-    
-    
+
     { field: "name", headerName: "Name", flex: 1, minWidth: 150 },
     { field: "email", headerName: "Email", flex: 1, minWidth: 180 },
     { field: "website", headerName: "Website", flex: 1, minWidth: 150 },
 
     {
-  field: "subscribers",
-  headerName: "Subscribers",
-  width: 130,
-  align: "center",
-  headerAlign: "center",
-  renderCell: (params) => {
-    const count = subscriberCounts[params.row._id] ?? 0;
+      field: "subscribers",
+      headerName: "Subscribers",
+      width: 130,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params) => {
+        const count = subscriberCounts[params.row._id] ?? 0;
 
-    return (
-      <Chip
-        label={count}
-        size="small"
-        color={count > 0 ? "primary" : "default"}
-      />
-    );
-  },
-},
+        return (
+          <Chip
+            label={count}
+            size="small"
+            color={count > 0 ? "primary" : "default"}
+          />
+        );
+      },
+    },
 
     {
       field: "actions",
@@ -233,7 +234,10 @@ export default function AdminCompanyPage() {
         return (
           <Box display="flex" gap={0.5}>
             <Tooltip title="View">
-              <IconButton size="small" onClick={() => handleViewCompany(company)}>
+              <IconButton
+                size="small"
+                onClick={() => handleViewCompany(company)}
+              >
                 <Visibility fontSize="small" />
               </IconButton>
             </Tooltip>
@@ -260,9 +264,6 @@ export default function AdminCompanyPage() {
     },
   ];
 
-
-  
-
   return (
     <Container>
       <Typography variant="h4" my={4}>
@@ -282,10 +283,12 @@ export default function AdminCompanyPage() {
       {/* DataGrid */}
       <Box sx={{ width: "100%" }}>
         <DataGrid
-          rows={companies.map(c => ({ ...c, id: c._id }))}
+          rows={companies.map((c) => ({ ...c, id: c._id }))}
           columns={columns}
           pageSizeOptions={[5, 10, 20]}
-          initialState={{ pagination: { paginationModel: { pageSize: 5, page: 0 } } }}
+          initialState={{
+            pagination: { paginationModel: { pageSize: 5, page: 0 } },
+          }}
           autoHeight
           loading={loading}
           disableRowSelectionOnClick
@@ -298,9 +301,6 @@ export default function AdminCompanyPage() {
           }}
         />
       </Box>
-      
-
-      
 
       {/* view Company */}
 
@@ -381,8 +381,7 @@ export default function AdminCompanyPage() {
             <TextField
               fullWidth
               label="Email"
-              variant="outlined"
-              value={formData.email}
+              value={formData.email ?? ""}
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
               }
@@ -437,21 +436,21 @@ export default function AdminCompanyPage() {
                   type="file"
                   accept="image/*"
                   onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      
-                      setFormData({
-                          ...formData,
-                          logoPreview: URL.createObjectURL(file),
-                        });
-                        
-                        setSelectedCompany((prev: any) => ({
-                            ...prev,
-                            newLogo: file,
-                        }));
-                    }}
-                    />
-                    Change Logo
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+
+                    setFormData({
+                      ...formData,
+                      logoPreview: URL.createObjectURL(file),
+                    });
+
+                    setSelectedCompany((prev: any) => ({
+                      ...prev,
+                      newLogo: file,
+                    }));
+                  }}
+                />
+                Change Logo
               </Button>
 
               {formData.logoPreview && (

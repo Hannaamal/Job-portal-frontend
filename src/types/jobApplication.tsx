@@ -39,4 +39,3 @@ export interface Application {
   createdAt: string;
   updatedAt: string;
 }
-
