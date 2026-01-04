@@ -4,7 +4,12 @@ import api from "@/lib/api";
 
 interface Notification {
   _id: string;
-  job?: { title: string; company: string; location: string };
+  job?: { 
+    _id:string;
+    title: string;
+    company: string;
+    location: string
+     };
   message: string;
   isRead: boolean;
   createdAt: string;

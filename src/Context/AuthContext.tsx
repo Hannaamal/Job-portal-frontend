@@ -96,12 +96,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   return (
+
     <AuthContext.Provider
       value={{
         user,
         token,
         loading,
-        isAuthenticated: !!token,   // ✅ THE IMPORTANT LINE
+        isAuthenticated: !loading && !!user, // ✅ only authenticated after loading
         login,
         logout,
         setAuthenticatedUser,
@@ -111,5 +112,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     </AuthContext.Provider>
   );
 }
+
 
 export const useAuth = () => useContext(AuthContext);

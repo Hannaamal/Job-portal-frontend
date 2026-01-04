@@ -14,6 +14,10 @@ const initialState: SavedJobsState = {
   error: null,
 };
 
+
+
+
+
 // Fetch saved jobs
 export const fetchSavedJobs = createAsyncThunk("savedJobs/fetchSavedJobs", async (_, { rejectWithValue }) => {
   try {

@@ -1,9 +1,4 @@
-function ApplicationRow({
-  title,
-  received,
-  hold,
-  rejected,
-}: any) {
+function ApplicationRow({ title, received, hold, rejected }: any) {
   return (
     <div>
       <p className="font-medium">{title}</p>
@@ -16,24 +11,15 @@ function ApplicationRow({
   );
 }
 
-export default function ApplicationsCard() {
+export default function ApplicationsCard({ data }: any) {
   return (
     <div className="bg-white rounded-xl p-6 shadow">
       <h3 className="font-semibold mb-4">Applications</h3>
 
       <div className="space-y-4">
-        <ApplicationRow
-          title="Design"
-          received="05"
-          hold="01"
-          rejected="03"
-        />
-        <ApplicationRow
-          title="React JS"
-          received="25"
-          hold="03"
-          rejected="06"
-        />
+        {data.map((item: any, i: number) => (
+          <ApplicationRow key={i} {...item} />
+        ))}
       </div>
     </div>
   );

@@ -61,105 +61,92 @@ export default function Navbar() {
 
 
 
-  return (
-    <nav className="flex items-center justify-between px-8 py-4 bg-white shadow-sm">
-      {/* LEFT */}
-      <div className="flex items-center gap-8">
-        <Link href="/" className="text-2xl font-bold text-blue-600">
-          JobPortal
-        </Link>
-        <Link href="/" className="text-gray-700 hover:text-blue-600">
-          Jobs
-        </Link>
-        <Link href="/companies" className="text-gray-700 hover:text-blue-600">
-          Companies
-        </Link>
-      </div>
+// In Navbar.tsx
+if (loading) {
+  // Prevent flicker while checking auth
+  return <div className="h-16 bg-white shadow-sm"></div>;
+}
 
-      {/* RIGHT */}
-      <div className="flex items-center gap-6">
-        {!isAuthenticated ? (
-          // 🔐 NOT LOGGED IN
+return (
+  <nav className="flex items-center justify-between px-8 py-4 bg-white shadow-sm">
+    {/* LEFT */}
+    <div className="flex items-center gap-8">
+      <Link href="/" className="text-2xl font-bold text-blue-600">JobPortal</Link>
+      <Link href="/" className="text-gray-700 hover:text-blue-600">Jobs</Link>
+      <Link href="/companies" className="text-gray-700 hover:text-blue-600">Companies</Link>
+    </div>
+
+    {/* RIGHT */}
+    <div className="flex items-center gap-6">
+      {!isAuthenticated ? (
+        <button
+          onClick={() => router.push("/register")}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+        >
+          Login / Register
+        </button>
+      ) : (
+        <>
+          {/* Notifications */}
+          <Link href="/notifications" className="relative">
+            <NotificationsIcon className="text-gray-700" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1 rounded-full">
+                {unreadCount}
+              </span>
+            )}
+          </Link>
+
+          {/* Saved Jobs */}
           <button
-            onClick={() => router.push("/register")}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            onClick={() => router.push("/saved-jobs")}
+            className="relative p-2 rounded-full hover:bg-gray-100 transition"
           >
-            Login / Register
+            <BookmarkIcon className="text-gray-700 hover:text-blue-600" />
+            {savedCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs px-1 rounded-full">
+                {savedCount}
+              </span>
+            )}
           </button>
-        ) : (
-          // ✅ LOGGED IN
-          <>
-            {/* Notifications */}
-            <Link href="/notifications" className="relative">
-              <NotificationsIcon className="text-gray-700" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1 rounded-full">
-                  {unreadCount}
-                </span>
-              )}
-            </Link>
 
-            {/* Saved Jobs */}
-            <button
-              onClick={() => router.push("/job/saved-jobs")}
-              className="relative p-2 rounded-full hover:bg-gray-100 transition"
-            >
-              <BookmarkIcon className="text-gray-700 hover:text-blue-600" />
-              {savedCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs px-1 rounded-full">
-                  {savedCount}
-                </span>
-              )}
-            </button>
+          {/* Profile */}
+          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+            <AccountCircleIcon fontSize="large" />
+          </IconButton>
+        </>
+      )}
+    </div>
 
-            {/* Profile */}
-            <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-              <AccountCircleIcon fontSize="large" />
-            </IconButton>
-          </>
-        )}
-      </div>
+    {/* PROFILE MENU */}
+    <Menu
+      anchorEl={anchorEl}
+      open={open}
+      onClose={() => setAnchorEl(null)}
+      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      transformOrigin={{ vertical: "top", horizontal: "right" }}
+    >
+      <MenuItem component={Link} href="/profile">
+        <ListItemIcon><AccountBoxIcon fontSize="small" /></ListItemIcon>Profile
+      </MenuItem>
+      <MenuItem component={Link} href="/companies/my-subscriptions">
+        <ListItemIcon><SubscriptionsIcon fontSize="small" /></ListItemIcon>My Subscriptions
+      </MenuItem>
+      <MenuItem component={Link} href="/my-application">
+        <ListItemIcon><WorkIcon fontSize="small" /></ListItemIcon>Applied Jobs
+      </MenuItem>
 
-      {/* PROFILE MENU */}
-      <Menu
-        anchorEl={anchorEl}
-        open={open}
-        onClose={() => setAnchorEl(null)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <MenuItem component={Link} href="/profile">
-          <ListItemIcon>
-            <AccountBoxIcon fontSize="small" />
-          </ListItemIcon>
-          Profile
-        </MenuItem>
+      <Divider />
 
-        <MenuItem component={Link} href="/companies/my-subscriptions">
-          <ListItemIcon>
-            <SubscriptionsIcon fontSize="small" />
-          </ListItemIcon>
-          My Subscriptions
-        </MenuItem>
+      <MenuItem onClick={async () => {
+        await dispatch(logoutUser()).unwrap();
+        logout(); // clear context
+        router.replace("/register");
+      }}>
+        <ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>Logout
+      </MenuItem>
+    </Menu>
+  </nav>
+);
 
-        <MenuItem component={Link} href="/job/my-application">
-          <ListItemIcon>
-            <WorkIcon fontSize="small" />
-          </ListItemIcon>
-          Applied Jobs
-        </MenuItem>
-
-        
-
-        <Divider />
-
-        <MenuItem onClick={handleLogout}>
-          <ListItemIcon>
-            <LogoutIcon fontSize="small" />
-          </ListItemIcon>
-          Logout
-        </MenuItem>
-      </Menu>
-    </nav>
-  );
 }

@@ -71,7 +71,7 @@ export const updateApplicationStatus = createAsyncThunk<
   Application,
   { applicationId: string; status: string }
 >("adminApplications/updateStatus", async ({ applicationId, status }) => {
-  const res = await api.put(`/api/admin/applications/${applicationId}/status`, {
+  const res = await api.put(`/api/admin/application/applications/${applicationId}/status`, {
     status,
   });
 

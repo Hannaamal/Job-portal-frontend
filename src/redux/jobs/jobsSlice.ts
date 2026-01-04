@@ -12,6 +12,34 @@ const getToken = () => Cookies.get("auth_token");
 interface FetchJobsParams {
   [key: string]: string | number | boolean;
 }
+export interface SalaryRange {
+  min: number;
+  max: number;
+}
+export interface Company {
+  _id: string;
+  name: string;
+  logo?: string;
+  location?: string;
+}
+
+export interface Skill {
+  _id: string;
+  name: string;
+}
+
+export interface Job {
+  _id: string;
+  title: string;
+  description: string;
+  company: Company | string; // <-- can be populated or just ID
+  location: string;
+ salaryRange?: SalaryRange;
+  jobType?: string;
+  experienceLevel?: string;
+  requiredSkills?: Skill[];
+  createdAt?: string;
+}
 
 // Fetch all jobs
 export const fetchJobs = createAsyncThunk(
@@ -74,9 +102,6 @@ export const applyJob = createAsyncThunk(
   }
 );
 
-
-
-
 export const fetchJobsByCompany = createAsyncThunk(
   "jobs/fetchByCompany",
   async (companyId: string, { rejectWithValue }) => {
@@ -93,8 +118,18 @@ export const fetchJobsByCompany = createAsyncThunk(
    Slice
 ======================= */
 
+// =======================
+// Job Type
+// =======================
+
+
+
+
+
+
 interface JobsState {
   jobs: any[];
+  job: Job | null; // single job
   selectedJob: any | null;
   loading: boolean;
   error: string | null;
@@ -104,6 +139,7 @@ interface JobsState {
 
 const initialState: JobsState = {
   jobs: [],
+  job: null,
   selectedJob: null,
   loading: false,
   error: null,
@@ -147,8 +183,9 @@ const jobsSlice = createSlice({
       })
       .addCase(fetchJobById.fulfilled, (state, action) => {
         state.loading = false;
-        state.selectedJob = action.payload;
+        state.job = action.payload; // ✅ FIX
       })
+
       .addCase(fetchJobById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;

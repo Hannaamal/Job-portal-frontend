@@ -7,6 +7,7 @@ import {
   withdrawApplication,
 } from "@/redux/jobs/myApplicationsSlice";
 import { RootState, AppDispatch } from "@/redux/store";
+import { useRouter } from "next/navigation";
 
 export default function MyApplicationsPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -15,7 +16,9 @@ export default function MyApplicationsPage() {
     (state: RootState) => state.myApplications
   );
 
-  const [activeTab, setActiveTab] = useState<"applied" | "interviews">("applied");
+  const [activeTab, setActiveTab] = useState<"applied" | "interviews">(
+    "applied"
+  );
 
   useEffect(() => {
     dispatch(fetchMyApplications());
@@ -29,6 +32,7 @@ export default function MyApplicationsPage() {
     (app: any) => app.status === "interview"
   );
 
+  const router = useRouter();
   const handleWithdraw = (jobId: string) => {
     if (confirm("Withdraw this application?")) {
       dispatch(withdrawApplication(jobId));
@@ -79,7 +83,8 @@ export default function MyApplicationsPage() {
           {appliedJobs.map((app: any) => (
             <div
               key={app._id}
-              className="border border-gray-200 rounded-xl p-5 bg-white hover:shadow-md transition flex flex-col justify-between"
+              onClick={() => router.push(`/job/${app.job._id}`)}
+              className="cursor-pointer border border-gray-200 rounded-xl p-5 bg-white hover:shadow-md transition flex flex-col justify-between"
             >
               <div>
                 <h3 className="font-semibold text-lg text-gray-900">
@@ -88,18 +93,18 @@ export default function MyApplicationsPage() {
                 <p className="text-sm text-gray-500 mb-2">
                   {app.company?.name}
                 </p>
-
-                <p className="text-sm text-gray-600">
-                  📍 {app.job?.location}
-                </p>
-
+                <p className="text-sm text-gray-600">📍 {app.job?.location}</p>
                 <span className="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-600">
                   {app.status}
                 </span>
               </div>
 
+              {/* Withdraw Button */}
               <button
-                onClick={() => handleWithdraw(app.job._id)}
+                onClick={(e) => {
+                  e.stopPropagation(); // prevent card click
+                  handleWithdraw(app.job._id);
+                }}
                 className="mt-5 text-sm border border-gray-300 px-4 py-2 rounded-lg hover:border-red-500 hover:text-red-600 transition"
               >
                 Withdraw

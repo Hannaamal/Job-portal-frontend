@@ -31,20 +31,44 @@ export default function AdminJobsPage() {
   const [skills, setSkills] = useState<any[]>([]);
   const [deleteJobId, setDeleteJobId] = useState<string | null>(null);
   const [deleteJobTitle, setDeleteJobTitle] = useState<string>("");
+  const [search, setSearch] = useState("");
+  const [companyFilter, setCompanyFilter] = useState("");
+
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchAdminJobs());
-    // preload companies and skills
-    const fetchData = async () => {
-      const [companiesRes, skillsRes] = await Promise.all([
-        api.get("/api/company/view"),
-        api.get("/api/skills"),
-      ]);
-      setCompanies(companiesRes.data.companies);
-      setSkills(skillsRes.data.skills);
+    setMounted(true);
+  }, []);
+  useEffect(() => {
+  dispatch(fetchAdminJobs(undefined));
+}, [dispatch]);
+
+
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      const params: any = {};
+
+      if (search.trim()) params.jobTitle = search.trim();
+      if (companyFilter) params.company = companyFilter;
+
+      dispatch(fetchAdminJobs(params));
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [dispatch, search, companyFilter]);
+
+  useEffect(() => {
+    const loadCompanies = async () => {
+      try {
+        const res = await api.get("/api/company/view");
+        setCompanies(res.data.companies ?? res.data ?? []);
+      } catch (err) {
+        console.error("Failed to load companies", err);
+      }
     };
-    fetchData();
-  }, [dispatch]);
+
+    loadCompanies();
+  }, []);
 
   const handleDeleteClick = (job: any) => {
     setDeleteJobId(job._id);
@@ -68,11 +92,17 @@ export default function AdminJobsPage() {
     setEditJob(job);
   };
 
-  const handleEditSave = (updatedData: any) => {
-    if (!editJob) return; // safety check
-    dispatch(updateJob({ id: editJob._id, data: updatedData }));
-    setEditJob(null);
-  };
+  const handleEditSave = async (updatedData: any) => {
+  if (!editJob) return;
+
+  await dispatch(updateJob({ id: editJob._id, data: updatedData }));
+  
+  // Refetch jobs to ensure latest data
+  dispatch(fetchAdminJobs(undefined));
+
+  setEditJob(null);
+};
+
 
   const columns: GridColDef[] = [
     { field: "title", headerName: "Job Title", flex: 1, minWidth: 180 },
@@ -146,18 +176,115 @@ export default function AdminJobsPage() {
       <h1 className="text-lg font-semibold">Jobs</h1>
 
       <div className="bg-white rounded-lg border">
-        <DataGrid
-          rows={jobs}
-          columns={columns}
-          loading={loading}
-          getRowId={(row) => row._id}
-          autoHeight
-          pageSizeOptions={[5, 10, 20]}
-          initialState={{
-            pagination: { paginationModel: { pageSize: 10, page: 0 } },
-          }}
-          disableRowSelectionOnClick
-        />
+        <div className="flex flex-wrap gap-3 items-center">
+          {/* Search */}
+          <input
+            type="text"
+            placeholder="Search job title..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="px-3 py-2 border rounded-md text-sm w-60"
+          />
+
+          {/* Company Filter */}
+          <select
+            value={companyFilter}
+            onChange={(e) => setCompanyFilter(e.target.value)}
+            className="px-3 py-2 border rounded-md text-sm w-60"
+          >
+            <option value="">All Companies</option>
+
+            {(companies ?? []).map((company) => (
+              <option key={company._id} value={company._id}>
+                {company.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {mounted && (
+          <DataGrid
+            rows={jobs}
+            columns={columns}
+            loading={loading}
+            getRowId={(row) => row._id}
+            autoHeight
+            density="compact"
+            pageSizeOptions={[5, 10, 20]}
+            disableRowSelectionOnClick
+            initialState={{
+              pagination: { paginationModel: { pageSize: 10, page: 0 } },
+            }}
+            localeText={{
+              noRowsLabel: "No jobs match your filters",
+            }}
+            sx={{
+              border: "none",
+
+              /* HEADER */
+              "& .MuiDataGrid-columnHeaders": {
+                backgroundColor: "#f8fafc",
+                borderBottom: "1px solid #e5e7eb",
+                fontSize: "13px",
+                fontWeight: 600,
+                color: "#111827",
+                textTransform: "uppercase",
+                letterSpacing: "0.03em",
+              },
+
+              /* HEADER CELLS */
+              "& .MuiDataGrid-columnHeaderTitle": {
+                fontWeight: 600,
+              },
+
+              /* ROWS */
+              "& .MuiDataGrid-row": {
+                transition: "background-color 0.2s ease",
+              },
+
+              "& .MuiDataGrid-row:hover": {
+                backgroundColor: "#f1f5f9",
+              },
+
+              /* CELLS */
+              "& .MuiDataGrid-cell": {
+                borderBottom: "1px solid #f1f5f9",
+                fontSize: "13.5px",
+                color: "#374151",
+              },
+
+              /* FOOTER */
+              "& .MuiDataGrid-footerContainer": {
+                borderTop: "1px solid #e5e7eb",
+                backgroundColor: "#fafafa",
+              },
+
+              /* PAGINATION */
+              "& .MuiTablePagination-root": {
+                fontSize: "12px",
+              },
+
+              /* ICONS */
+              "& .MuiDataGrid-sortIcon": {
+                opacity: 0.4,
+              },
+
+              "& .MuiDataGrid-menuIcon": {
+                opacity: 0.4,
+              },
+
+              /* REMOVE BLUE FOCUS */
+              "& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus": {
+                outline: "none",
+              },
+
+              /* CHECKBOX (if enabled later) */
+              "& .MuiCheckbox-root": {
+                color: "#9ca3af",
+              },
+            }}
+          />
+        )}
       </div>
 
       {/* View Dialog */}

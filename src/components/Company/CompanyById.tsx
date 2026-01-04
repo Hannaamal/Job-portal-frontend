@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCompanyById } from "@/redux/company/companySlice";
 import { fetchJobs, fetchJobsByCompany } from "@/redux/jobs/jobsSlice";
+import { useRouter } from "next/navigation";
 import { RootState, AppDispatch } from "@/redux/store";
 import SubscribeButton from "@/components/Company/SubscribeButton"; // import your button
 
@@ -18,6 +19,7 @@ export default function CompanyProfilePage() {
   const { jobs, loading: jobsLoading } = useSelector(
     (state: RootState) => state.jobs
   );
+  const router = useRouter();
 
   useEffect(() => {
     if (id) {
@@ -70,9 +72,16 @@ export default function CompanyProfilePage() {
         ) : (
           <div className="space-y-4">
             {jobs.map((job: any) => (
-              <div key={job._id} className="border p-4 rounded hover:shadow">
-                <h3 className="font-bold">{job.title}</h3>
-                <p className="text-gray-600">{job.location}</p>
+              <div
+                key={job._id}
+                onClick={() => router.push(`/job/${job._id}`)}
+                className="border p-4 rounded hover:shadow cursor-pointer transition flex justify-between items-center"
+              >
+                <div>
+                  <h3 className="font-bold">{job.title}</h3>
+                  <p className="text-gray-600">{job.location}</p>
+                </div>
+                <span className="text-gray-400 text-sm">➡</span>
               </div>
             ))}
           </div>

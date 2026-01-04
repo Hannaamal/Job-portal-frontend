@@ -2,142 +2,171 @@
 
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  fetchAdminApplications,
-  updateApplicationStatus,
-  Application,
-} from "@/redux/admin/applicationSlice";
+import { fetchAdminApplications, updateApplicationStatus } from "@/redux/admin/applicationSlice";
 import { RootState, AppDispatch } from "@/redux/store";
-import ScheduleInterviewModal from "@/components/admin/ScheduleInterviewModal";
-import InterviewActions from "@/components/admin/InterviewActionButtons";
+
+const ITEMS_PER_PAGE = 5;
 
 export default function AdminApplicationsPage() {
   const dispatch = useDispatch<AppDispatch>();
-
   const { applications, loading } = useSelector(
     (state: RootState) => state.adminApplications
   );
 
-  const [selectedApp, setSelectedApp] = useState<Application | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     dispatch(fetchAdminApplications());
   }, [dispatch]);
 
-  if (loading)
+  const totalPages = Math.ceil(applications.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedApplications = applications.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
+
+  if (loading) {
     return <p className="p-6 text-gray-500">Loading applications...</p>;
+  }
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-semibold mb-6">Job Applications</h1>
+    <div className="flex flex-col min-h-screen p-6 bg-gray-50">
+      <h1 className="text-2xl font-bold mb-6">Job Applications</h1>
 
       {applications.length === 0 && (
         <p className="text-gray-500">No applications found.</p>
       )}
 
-      <div className="space-y-4">
-        {applications.map((app) => (
-          <div
-            key={app._id}
-            className="bg-white border rounded-xl p-5 flex justify-between gap-6"
-          >
-            {/* LEFT SECTION */}
-            <div>
-              <h3 className="font-medium text-gray-900">
-                {app.job?.title ?? "Untitled Job"}
-              </h3>
+      {/* APPLICATION LIST */}
+  
+<div className="flex-1 space-y-4">
+  {paginatedApplications.map((app) => (
+    <div
+      key={app._id}
+      className="relative bg-white border rounded-xl p-6 shadow hover:shadow-lg transition duration-200"
+    >
+      {/* STATUS BADGE */}
+      <span
+        className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold uppercase ${
+          app.status === "applied"
+            ? "bg-yellow-100 text-yellow-800"
+            : app.status === "interview"
+            ? "bg-blue-100 text-blue-800"
+            : app.status === "shortlisted"
+            ? "bg-green-100 text-green-800"
+            : app.status === "rejected"
+            ? "bg-red-100 text-red-800"
+            : app.status === "hired"
+            ? "bg-purple-100 text-purple-800"
+            : "bg-gray-100 text-gray-800"
+        }`}
+      >
+        {app.status}
+      </span>
 
-              <p className="text-sm text-gray-500">
-                {app.company?.name ?? "Unknown Company"}
-              </p>
+      <h3 className="font-semibold text-gray-900 text-lg">
+        {app.job?.title ?? "Untitled Job"}
+      </h3>
+      <p className="text-sm text-gray-500 mb-2">
+        {app.company?.name ?? "Unknown Company"}
+      </p>
 
-              <div className="mt-2 text-sm text-gray-600 space-y-1">
-                <p>👤 {app.applicant?.name ?? "Unknown Applicant"}</p>
-                <p>📧 {app.applicant?.email ?? "-"}</p>
-                <p>
-                  📅 Applied on{" "}
-                  {app.createdAt
-                    ? new Date(app.createdAt).toLocaleDateString()
-                    : "-"}
-                </p>
-
-                {/* Show interview info if exists */}
-                {app.interview && (
-                  <div className="mt-2 p-2 border-l-4 border-blue-500 bg-blue-50 text-blue-700 text-sm">
-                    🗓 {new Date(app.interview.date).toLocaleString()} <br />
-                    {app.interview.mode === "Online"
-                      ? `💻 ${app.interview.meetingLink ?? "No link"}`
-                      : `📍 ${app.interview.location ?? "No location"}`}{" "}
-                    <br />
-                    📝 {app.interview.interviewType} Interview
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* RIGHT ACTIONS */}
-            <div className="flex flex-col gap-3">
-              {/* Status buttons */}
-              <div className="flex gap-2 flex-wrap">
-                {[
-                  "applied",
-                  "shortlisted",
-                  "interview",
-                  "rejected",
-                  "hired",
-                ].map((status) => (
-                  <button
-                    key={status}
-                    onClick={() =>
-                      dispatch(
-                        updateApplicationStatus({
-                          applicationId: app._id,
-                          status,
-                        })
-                      )
-                    }
-                    className={`px-3 py-1 rounded-full text-xs font-medium transition ${
-                      app.status === status
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </button>
-                ))}
-              </div>
-
-              {/* Schedule/Edit Interview Button */}
-
-              {/* 🔹 INTERVIEW ACTIONS */}
-              {app.status === "interview" && app.interview ? (
-                <InterviewActions
-                  interview={app.interview}
-                  refresh={() => dispatch(fetchAdminApplications())}
-                />
-              ) : (
-                <button
-                  onClick={() => setSelectedApp(app)}
-                  className="text-sm text-blue-600 hover:underline"
-                >
-                  Schedule Interview
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
+      <div className="text-sm text-gray-600 space-y-1">
+        <p>👤 {app.applicant?.name ?? "Unknown Applicant"}</p>
+        <p>📧 {app.applicant?.email ?? "-"}</p>
+        <p>
+          📅 Applied on{" "}
+          {app.createdAt
+            ? new Date(app.createdAt).toLocaleDateString()
+            : "-"}
+        </p>
       </div>
 
-      {/* SCHEDULE INTERVIEW MODAL */}
-      {selectedApp && (
-        <ScheduleInterviewModal
-          application={selectedApp}
-          onClose={() => setSelectedApp(null)}
-          onSuccess={() => {
-            dispatch(fetchAdminApplications()); // refresh data to get updated interview
-            setSelectedApp(null);
-          }}
-        />
+      {/* READ-ONLY INTERVIEW INFO */}
+      {app.interview && (
+        <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded text-sm">
+          <p className="font-medium mb-1">Interview Details</p>
+          <p>🗓 {new Date(app.interview.date).toLocaleString()}</p>
+          <p>
+            {app.interview.mode === "Online"
+              ? `💻 ${app.interview.meetingLink ?? "No link"}`
+              : `📍 ${app.interview.location ?? "No location"}`}
+          </p>
+          <p>📝 {app.interview.interviewType} Interview</p>
+        </div>
+      )}
+
+      {/* ADMIN STATUS BUTTONS */}
+      <div className="mt-4 flex flex-wrap gap-2">
+        {["applied", "interview", "shortlisted", "rejected", "hired"].map(
+          (statusOption) => (
+            <button
+              key={statusOption}
+              onClick={async () => {
+                try {
+                  await dispatch(
+                    updateApplicationStatus({
+                      applicationId: app._id,
+                      status: statusOption,
+                    })
+                  );
+                  dispatch(fetchAdminApplications()); // refresh
+                } catch (err) {
+                  console.error(err);
+                }
+              }}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition ${
+                app.status === statusOption
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {statusOption.charAt(0).toUpperCase() + statusOption.slice(1)}
+            </button>
+          )
+        )}
+      </div>
+    </div>
+  ))}
+</div>
+
+
+      {/* FIXED BOTTOM PAGINATION */}
+      {totalPages > 1 && (
+        <div className="mt-6 sticky bottom-0 bg-gray-50 py-4 flex justify-center border-t border-gray-200 shadow-inner z-10">
+          <nav className="inline-flex items-center space-x-2">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+              className="px-4 py-2 rounded-full bg-white text-gray-700 shadow hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              Prev
+            </button>
+
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`px-4 py-2 rounded-full ${
+                  currentPage === i + 1
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "bg-white text-gray-700 shadow hover:bg-gray-100"
+                } transition-all`}
+              >
+                {i + 1}
+              </button>
+            ))}
+
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+              className="px-4 py-2 rounded-full bg-white text-gray-700 shadow hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              Next
+            </button>
+          </nav>
+        </div>
       )}
     </div>
   );

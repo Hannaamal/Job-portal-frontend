@@ -12,6 +12,7 @@ import adminUsersReducer from "./admin/userSlice";
 import notificationsReducer from "./notificationSlice";
 import savedJobsSliceReducer from "./jobs/saveJobSlice";
 import adminApplicationsSlice from "./admin/applicationSlice"
+import dashboardReducer from "./admin/dashboardSlice";
 
 
 
@@ -31,6 +32,7 @@ export const store = configureStore({
      notifications: notificationsReducer,
      savedJobs:savedJobsSliceReducer,
      adminApplications:adminApplicationsSlice,
+      adminDashboard: dashboardReducer,
   },
 });
 

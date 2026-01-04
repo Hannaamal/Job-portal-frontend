@@ -26,17 +26,22 @@ const initialState: AdminJobsState = {
 // 🔹 Fetch all jobs (admin)
 export const fetchAdminJobs = createAsyncThunk(
   "adminJobs/fetchAll",
-  async (_, { rejectWithValue }) => {
+  async (
+   params: { jobTitle?: string; company?: string } | undefined,
+
+    { rejectWithValue }
+  ) => {
     try {
-      const res = await api.get("/api/job/");
+      const res = await api.get("/api/job/", {
+        params,
+      });
       return res.data.jobs;
     } catch (err: any) {
-      return rejectWithValue(
-        err.response?.data?.message || "Failed to load jobs"
-      );
+      return rejectWithValue("Failed to load jobs");
     }
   }
 );
+
 
 // Fetch single job
 export const fetchAdminJobById = createAsyncThunk(
@@ -59,7 +64,9 @@ export const updateJob = createAsyncThunk(
   async ({ id, data }: { id: string; data: any }, { rejectWithValue }) => {
     try {
       const res = await api.put(`/api/job/${id}`, data);
+      console.log("UPDATE JOB API CALLED",res);
       return res.data.job;
+
     } catch (err: any) {
       return rejectWithValue(
         err.response?.data?.message || "Failed to update job"
