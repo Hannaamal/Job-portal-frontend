@@ -5,6 +5,7 @@ import BusinessIcon from "@mui/icons-material/Business";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
+
 import JobApplyButton from "./jobApplicationButton";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
 import { useDispatch, useSelector } from "react-redux";

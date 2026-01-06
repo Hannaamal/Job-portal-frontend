@@ -27,7 +27,6 @@ import { logoutUser } from "@/redux/authSlice";
 export default function Navbar() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-
   const { isAuthenticated, loading, logout } = useAuth();
 
   const notifications = useSelector(
@@ -43,110 +42,105 @@ export default function Navbar() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
-  // ✅ Fetch data ONLY when logged in
+  // Fetch notifications & saved jobs only when logged in
   useEffect(() => {
     if (isAuthenticated) {
       dispatch(fetchNotifications());
       dispatch(fetchSavedJobs());
     }
   }, [dispatch, isAuthenticated]);
+  
 
-  // ✅ Prevent flicker
-  if (loading) return null;
+  // Prevent flicker
+ if (loading && isAuthenticated) {
+  console.log("Navbar auth:", isAuthenticated, loading);
 
-  const handleLogout = async () => {
-  await dispatch(logoutUser()).unwrap(); // ensures success
-  router.replace("/register");           // 👈 replace, NOT push
-};
-
-
-
-// In Navbar.tsx
-if (loading) {
-  // Prevent flicker while checking auth
   return <div className="h-16 bg-white shadow-sm"></div>;
 }
 
-return (
-  <nav className="flex items-center justify-between px-8 py-4 bg-white shadow-sm">
-    {/* LEFT */}
-    <div className="flex items-center gap-8">
-      <Link href="/" className="text-2xl font-bold text-blue-600">JobPortal</Link>
-      <Link href="/" className="text-gray-700 hover:text-blue-600">Jobs</Link>
-      <Link href="/companies" className="text-gray-700 hover:text-blue-600">Companies</Link>
-    </div>
+  const handleLogout = async () => {
+    await dispatch(logoutUser()).unwrap();
+    logout(); // clear auth context
+    router.replace("/register");
+  };
 
-    {/* RIGHT */}
-    <div className="flex items-center gap-6">
-      {!isAuthenticated ? (
-        <button
-          onClick={() => router.push("/register")}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-        >
-          Login / Register
-        </button>
-      ) : (
-        <>
-          {/* Notifications */}
-          <Link href="/notifications" className="relative">
-            <NotificationsIcon className="text-gray-700" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1 rounded-full">
-                {unreadCount}
-              </span>
-            )}
-          </Link>
+  return (
+    <nav className="flex items-center justify-between px-8 py-4 bg-white shadow-sm">
+      {/* LEFT */}
+      <div className="flex items-center gap-8">
+        <Link href="/" className="text-2xl font-bold text-blue-600">
+          JobPortal
+        </Link>
+        <Link href="/" className="text-gray-700 hover:text-blue-600">Jobs</Link>
+        <Link href="/companies" className="text-gray-700 hover:text-blue-600">Companies</Link>
+      </div>
 
-          {/* Saved Jobs */}
+      {/* RIGHT */}
+      <div className="flex items-center gap-6">
+        {!isAuthenticated ? (
           <button
-            onClick={() => router.push("/saved-jobs")}
-            className="relative p-2 rounded-full hover:bg-gray-100 transition"
+            onClick={() => router.push("/register")}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
           >
-            <BookmarkIcon className="text-gray-700 hover:text-blue-600" />
-            {savedCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs px-1 rounded-full">
-                {savedCount}
-              </span>
-            )}
+            Login / Register
           </button>
+        ) : (
+          <>
+            {/* Notifications */}
+            <Link href="/notifications" className="relative">
+              <NotificationsIcon className="text-gray-700" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1 rounded-full">
+                  {unreadCount}
+                </span>
+              )}
+            </Link>
 
-          {/* Profile */}
-          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-            <AccountCircleIcon fontSize="large" />
-          </IconButton>
-        </>
-      )}
-    </div>
+            {/* Saved Jobs */}
+            <button
+              onClick={() => router.push("/saved-jobs")}
+              className="relative p-2 rounded-full hover:bg-gray-100 transition"
+            >
+              <BookmarkIcon className="text-gray-700 hover:text-blue-600" />
+              {savedCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs px-1 rounded-full">
+                  {savedCount}
+                </span>
+              )}
+            </button>
 
-    {/* PROFILE MENU */}
-    <Menu
-      anchorEl={anchorEl}
-      open={open}
-      onClose={() => setAnchorEl(null)}
-      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      transformOrigin={{ vertical: "top", horizontal: "right" }}
-    >
-      <MenuItem component={Link} href="/profile">
-        <ListItemIcon><AccountBoxIcon fontSize="small" /></ListItemIcon>Profile
-      </MenuItem>
-      <MenuItem component={Link} href="/companies/my-subscriptions">
-        <ListItemIcon><SubscriptionsIcon fontSize="small" /></ListItemIcon>My Subscriptions
-      </MenuItem>
-      <MenuItem component={Link} href="/my-application">
-        <ListItemIcon><WorkIcon fontSize="small" /></ListItemIcon>Applied Jobs
-      </MenuItem>
+            {/* Profile */}
+            <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+              <AccountCircleIcon fontSize="large" />
+            </IconButton>
+          </>
+        )}
+      </div>
 
-      <Divider />
+      {/* PROFILE MENU */}
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <MenuItem component={Link} href="/profile">
+          <ListItemIcon><AccountBoxIcon fontSize="small" /></ListItemIcon>Profile
+        </MenuItem>
+        <MenuItem component={Link} href="/companies/my-subscriptions">
+          <ListItemIcon><SubscriptionsIcon fontSize="small" /></ListItemIcon>My Subscriptions
+        </MenuItem>
+        <MenuItem component={Link} href="/my-application">
+          <ListItemIcon><WorkIcon fontSize="small" /></ListItemIcon>Applied Jobs
+        </MenuItem>
 
-      <MenuItem onClick={async () => {
-        await dispatch(logoutUser()).unwrap();
-        logout(); // clear context
-        router.replace("/register");
-      }}>
-        <ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>Logout
-      </MenuItem>
-    </Menu>
-  </nav>
-);
+        <Divider />
 
+        <MenuItem onClick={handleLogout}>
+          <ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>Logout
+        </MenuItem>
+      </Menu>
+    </nav>
+  );
 }

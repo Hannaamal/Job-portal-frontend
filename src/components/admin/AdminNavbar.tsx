@@ -1,24 +1,39 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Briefcase,
   Building2,
   Users,
+   LogOut,
 } from "lucide-react";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "@/redux/store";
+import { logoutUser } from "@/redux/authSlice";
 
 export default function AdminNavbar() {
   const pathname = usePathname();
-
+   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  
   const links = [
-    { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-    { name: "Jobs", href: "/admin/jobs", icon: Briefcase },
+      { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+      { name: "Jobs", href: "/admin/jobs", icon: Briefcase },
     { name: "Companies", href: "/admin/companies", icon: Building2 },
     { name: "Users", href: "/admin/users", icon: Users },
     { name: "Applications", href: "/admin/applications", icon: Users },
-  ];
+    { name: "Skills", href: "/admin/skills", icon: Briefcase },
+    
+];
+
+   const handleLogout = async () => {
+    await dispatch(logoutUser());
+    router.push("/register");
+  };
+  
 
   return (
     <aside className="w-64 min-h-screen bg-white border-r">
@@ -52,6 +67,16 @@ export default function AdminNavbar() {
           );
         })}
       </nav>
+      {/* LOGOUT BUTTON */}
+      <div className="p-4 border-t">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg"
+        >
+          <LogOut size={18} />
+          Logout
+        </button>
+      </div>
     </aside>
   );
 }

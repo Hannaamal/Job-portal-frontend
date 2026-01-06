@@ -22,10 +22,6 @@ export default function JobCard({ job, active, onSelect }: Props) {
 
   const isSaved = savedJobs.some((s) => s.job._id === job._id);
 
-  useEffect(() => {
-    dispatch(fetchSavedJobs());
-  }, [dispatch]);
-
   const handleToggleSave = (e: React.MouseEvent) => {
     e.stopPropagation(); // prevent triggering onSelect
     if (isSaved) {

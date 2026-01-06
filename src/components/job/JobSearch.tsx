@@ -1,18 +1,22 @@
 "use client";
 
+import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 export default function JobSearchBar() {
   const router = useRouter();
+  const pathname = usePathname(); // 👈 current page (home)
   const [keyword, setKeyword] = useState("");
   const [location, setLocation] = useState("");
 
   const handleSearch = () => {
     const params = new URLSearchParams();
-    if (keyword) params.append("keyword", keyword);
-    if (location) params.append("location", location);
-    router.push(`/jobs?${params.toString()}`);
+
+    if (keyword.trim()) params.set("keyword", keyword.trim());
+    if (location.trim()) params.set("location", location.trim());
+
+    // 👇 STAY on same page (HOME)
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   return (
@@ -20,7 +24,7 @@ export default function JobSearchBar() {
       <input
         value={keyword}
         onChange={(e) => setKeyword(e.target.value)}
-        placeholder="Job title, skills, or keywords"
+        placeholder="Job title, skills, or category"
         className="flex-1 outline-none"
       />
 
@@ -35,7 +39,7 @@ export default function JobSearchBar() {
 
       <button
         onClick={handleSearch}
-        className="bg-blue-600 text-white px-6 py-2 rounded-full font-medium"
+        className="bg-blue-600 text-white px-6 py-2 rounded-full"
       >
         Find jobs
       </button>
