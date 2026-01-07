@@ -11,6 +11,10 @@ import {
   addCompany,
 } from "@/redux/admin/companySlice";
 import { fetchSubscriberCount } from "@/redux/admin/companySlice";
+import {
+  addCompanySchema,
+  updateCompanySchema,
+} from "@/validators/companyValidator";
 
 import {
   Container,
@@ -32,6 +36,16 @@ import { Edit, Delete, Visibility, Close } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 
+const initialAddFormState = {
+  name: "",
+  email: "",
+  website: "",
+  description: "",
+  location: "",
+  logo: null as File | null,
+  logoPreview: "",
+};
+
 export default function AdminCompanyPage() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -42,6 +56,7 @@ export default function AdminCompanyPage() {
     email: "",
     website: "",
     logoPreview: "",
+    description: "",
     location: "",
   });
   const [openViewDialog, setOpenViewDialog] = useState(false);
@@ -58,14 +73,9 @@ export default function AdminCompanyPage() {
   const [openAddDrawer, setOpenAddDrawer] = useState(false);
 
   // 👉 Add company form
-  const [addForm, setAddForm] = useState({
-    name: "",
-    email: "",
-    website: "",
-    location: "",
-    logo: null as File | null,
-    logoPreview: "",
-  });
+  const [addForm, setAddForm] = useState(initialAddFormState);
+  const [addErrors, setAddErrors] = useState<Record<string, string>>({});
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
   // Fetch companies on mount
   useEffect(() => {
@@ -73,42 +83,58 @@ export default function AdminCompanyPage() {
   }, [dispatch]);
 
   useEffect(() => {
-  if (!companies || companies.length === 0) return;
+    if (!companies || companies.length === 0) return;
 
-  companies.forEach((company) => {
-    if (company?._id) {
-      dispatch(fetchSubscriberCount(company._id));
+    companies.forEach((company) => {
+      if (company?._id) {
+        dispatch(fetchSubscriberCount(company._id));
+      }
+    });
+  }, [companies, dispatch]);
+
+  useEffect(() => {
+    if (!openAddDrawer) {
+      // cleanup preview URL
+      if (addForm.logoPreview) {
+        URL.revokeObjectURL(addForm.logoPreview);
+      }
+
+      // reset form
+      setAddForm(initialAddFormState);
     }
-  });
-}, [companies, dispatch]);
-
+  }, [openAddDrawer]);
 
   // Add Company
   // ======================
-  const handleAddCompany = () => {
-    const formData = new FormData();
-    formData.append("name", addForm.name);
-    formData.append("email", addForm.email);
-    formData.append("website", addForm.website);
-    formData.append("location", addForm.location);
-    if (addForm.logo) formData.append("logo", addForm.logo);
+  const handleAddCompany = async () => {
+    try {
+      await addCompanySchema.validate(addForm, { abortEarly: false });
+      setAddErrors({}); // clear old errors
 
-    dispatch(addCompany(formData))
-      .unwrap()
-      .then(() => {
-        dispatch(fetchCompanies()); // <-- reload companies
-        setOpenAddDrawer(false);
-        setAddForm({
-          name: "",
-          email: "",
-          website: "",
-          location: "",
-          logo: null,
-          logoPreview: "",
+      const formData = new FormData();
+      formData.append("name", addForm.name);
+      formData.append("email", addForm.email);
+      formData.append("website", addForm.website);
+      formData.append("location", addForm.location);
+      formData.append("description", addForm.description);
+      if (addForm.logo) formData.append("logo", addForm.logo);
+
+      await dispatch(addCompany(formData)).unwrap();
+
+      dispatch(fetchCompanies());
+      setOpenAddDrawer(false);
+      setAddForm(initialAddFormState);
+    } catch (err: any) {
+      if (err.inner) {
+        const errors: Record<string, string> = {};
+        err.inner.forEach((e: any) => {
+          if (e.path) errors[e.path] = e.message;
         });
-      })
-      .catch((err) => console.error(err));
+        setAddErrors(errors);
+      }
+    }
   };
+
   useEffect(() => {
     return () => {
       if (addForm.logoPreview) {
@@ -130,6 +156,7 @@ export default function AdminCompanyPage() {
       name: company.name ?? "",
       email: company.email ?? "",
       website: company.website ?? "",
+      description: company.description ?? "",
       logoPreview: getCompanyLogo(company.logo),
       location: company.location ?? "",
     });
@@ -138,27 +165,38 @@ export default function AdminCompanyPage() {
   };
 
   // Update company
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!selectedCompany) return;
 
-    const form = new FormData();
-    form.append("name", formData.name);
-    form.append("email", formData.email);
-    form.append("website", formData.website);
-    form.append("location", formData.location);
+    try {
+      await updateCompanySchema.validate(formData, { abortEarly: false });
+      setEditErrors({}); // clear errors
 
-    if (selectedCompany.newLogo) {
-      form.append("logo", selectedCompany.newLogo);
+      const form = new FormData();
+      form.append("name", formData.name);
+      form.append("email", formData.email);
+      form.append("website", formData.website);
+      form.append("location", formData.location);
+
+      if (selectedCompany.newLogo) {
+        form.append("logo", selectedCompany.newLogo);
+      }
+
+      await dispatch(
+        updateCompany({ id: selectedCompany._id, formData: form })
+      ).unwrap();
+
+      dispatch(fetchCompanies());
+      setOpenEditDialog(false);
+    } catch (err: any) {
+      if (err.inner) {
+        const errors: Record<string, string> = {};
+        err.inner.forEach((e: any) => {
+          if (e.path) errors[e.path] = e.message;
+        });
+        setEditErrors(errors);
+      }
     }
-
-    dispatch(updateCompany({ id: selectedCompany._id, formData: form }))
-      .unwrap()
-      .then((updatedCompany) => {
-        // update the local Redux state
-        dispatch(fetchCompanies()); // reload or handle slice state update
-        setOpenEditDialog(false);
-      })
-      .catch((err) => console.error(err));
   };
 
   const getCompanyLogo = (logo?: string) => {
@@ -370,18 +408,20 @@ export default function AdminCompanyPage() {
             <TextField
               fullWidth
               label="Company Name"
-              variant="outlined"
               value={formData.name}
+              error={!!editErrors.name}
+              helperText={editErrors.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              InputProps={{ sx: { borderRadius: 2 } }}
             />
 
             <TextField
               fullWidth
               label="Email"
               value={formData.email ?? ""}
+              error={!!editErrors.email}
+              helperText={editErrors.email}
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
               }
@@ -393,6 +433,8 @@ export default function AdminCompanyPage() {
               label="Website"
               variant="outlined"
               value={formData.website}
+              error={!!editErrors.website}
+              helperText={editErrors.website}
               onChange={(e) =>
                 setFormData({ ...formData, website: e.target.value })
               }
@@ -404,8 +446,22 @@ export default function AdminCompanyPage() {
               label="Location"
               variant="outlined"
               value={formData.location || ""}
+              error={!!editErrors.location}
+              helperText={editErrors.location}
               onChange={(e) =>
                 setFormData({ ...formData, location: e.target.value })
+              }
+              InputProps={{ sx: { borderRadius: 2 } }}
+            />
+             <TextField
+              fullWidth
+              label="Description"
+              variant="outlined"
+              value={formData.description || ""}
+              error={!!editErrors.description}
+              helperText={editErrors.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
               }
               InputProps={{ sx: { borderRadius: 2 } }}
             />
@@ -540,6 +596,8 @@ export default function AdminCompanyPage() {
             label="Company Name"
             margin="normal"
             value={addForm.name}
+            error={!!addErrors.name}
+            helperText={addErrors.name}
             onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
           />
 
@@ -548,6 +606,8 @@ export default function AdminCompanyPage() {
             label="Email"
             margin="normal"
             value={addForm.email}
+            error={!!addErrors.email}
+            helperText={addErrors.email}
             onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
           />
 
@@ -556,17 +616,33 @@ export default function AdminCompanyPage() {
             label="Website"
             margin="normal"
             value={addForm.website}
+            error={!!addErrors.website}
+            helperText={addErrors.website}
             onChange={(e) =>
               setAddForm({ ...addForm, website: e.target.value })
             }
           />
+
           <TextField
             fullWidth
             label="Location"
             margin="normal"
             value={addForm.location}
+            error={!!addErrors.location}
+            helperText={addErrors.location}
             onChange={(e) =>
               setAddForm({ ...addForm, location: e.target.value })
+            }
+          />
+          <TextField
+            fullWidth
+            label="description"
+            margin="normal"
+            value={addForm.description}
+            error={!!addErrors.description}
+            helperText={addErrors.description}
+            onChange={(e) =>
+              setAddForm({ ...addForm, description: e.target.value })
             }
           />
 

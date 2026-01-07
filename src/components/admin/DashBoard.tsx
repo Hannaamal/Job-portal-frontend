@@ -35,8 +35,9 @@ export default function AdminDashboard() {
     return <p className="text-center mt-10 text-red-500">Error: {error}</p>;
 
   return (
-    <div className="space-y-6">
-      <TopBar value={company} onSearch={setCompany} />
+    <div className="space-y-6 ">
+      
+      <TopBar value={company} onSearch={setCompany}  />
 
       {/* STAT CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

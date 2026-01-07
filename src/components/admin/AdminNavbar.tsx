@@ -31,7 +31,7 @@ export default function AdminNavbar() {
 
    const handleLogout = async () => {
     await dispatch(logoutUser());
-    router.push("/register");
+    router.push("/authentication");
   };
   
 

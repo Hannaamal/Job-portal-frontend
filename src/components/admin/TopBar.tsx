@@ -97,7 +97,7 @@ export default function TopBar({
           {/* POST JOB */}
           <button
             type="button"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer"
             onClick={() => setSlideOpen(true)}
           >
             <Plus size={16} /> Post a Job

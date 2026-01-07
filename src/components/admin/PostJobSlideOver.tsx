@@ -3,34 +3,47 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import api from "@/lib/api";
+import { postJobSchema } from "@/validators/postJobValidator";
 
 interface PostJobSlideOverProps {
   isOpen: boolean;
   onClose: () => void;
 }
+const initialFormState = {
+  title: "",
+  description: "",
+  location: "",
+  isRemote: false,
+  jobType: "",
+  experienceLevel: "",
+  salaryMin: "",
+  salaryMax: "",
+  requiredSkills: [] as string[],
+  company: "",
+  expiresAt: "",
+};
 
 export default function PostJobSlideOver({
   isOpen,
   onClose,
 }: PostJobSlideOverProps) {
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    location: "",
-    isRemote: false,
-    jobType: "",
-    experienceLevel: "",
-    salaryMin: "",
-    salaryMax: "",
-    requiredSkills: [] as string[],
-    company: "",
-    expiresAt: "",
-  });
+
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [skills, setSkills] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
+  const [form, setForm] = useState(initialFormState);
+
+  useEffect(() => {
+  if (!isOpen) {
+    setForm(initialFormState); // 🔥 reset form
+    setError("");
+    setLoading(false);
+  }
+}, [isOpen]);
+
+
 
   useEffect(() => {
     if (!isOpen) return;
@@ -102,6 +115,8 @@ export default function PostJobSlideOver({
     setError("");
 
     try {
+      await postJobSchema.validate(form, { abortEarly: false });
+
       const payload = {
         title: form.title,
         description: form.description,
@@ -122,8 +137,15 @@ export default function PostJobSlideOver({
       alert(res.data.message);
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Something went wrong");
+      if (err.name === "ValidationError") {
+        // ✅ Yup errors
+        setError(err.errors.join(", "));
+      } else {
+        // ✅ API / server errors
+        setError(err.response?.data?.message || "Something went wrong");
+      }
     } finally {
+      // ✅ ALWAYS runs
       setLoading(false);
     }
   };
@@ -139,9 +161,7 @@ export default function PostJobSlideOver({
       <div className="flex items-center justify-between px-6 py-4">
         <div>
           <h2 className="text-base font-medium text-gray-900">Post new Job</h2>
-          <p className="text-xs text-gray-500 mt-0.5">
-            add a new job 
-          </p>
+          <p className="text-xs text-gray-500 mt-0.5">add a new job</p>
         </div>
 
         <button

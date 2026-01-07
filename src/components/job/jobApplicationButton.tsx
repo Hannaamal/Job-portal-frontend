@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { checkJobApplied } from "@/redux/jobs/jobApplicationSlice";
 import { RootState, AppDispatch } from "@/redux/store";
+import { useAuth } from "@/Context/AuthContext";
 
 interface JobApplyButtonProps {
   jobId: string;
@@ -13,6 +14,7 @@ interface JobApplyButtonProps {
 export default function JobApplyButton({ jobId }: JobApplyButtonProps) {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
 
   const { appliedJobs, loading } = useSelector(
     (state: RootState) => state.jobApplication
@@ -25,8 +27,23 @@ export default function JobApplyButton({ jobId }: JobApplyButtonProps) {
     dispatch(checkJobApplied(jobId));
   }, [dispatch, jobId]);
 
-  
+
   if (loading && appliedJobs[jobId] === undefined) return null; // or a skeleton
+  if (authLoading) return null;
+
+   if (!isAuthenticated) {
+    return (
+      <button
+        onClick={() =>
+          router.push(`/authentication?redirect=/apply/${jobId}`)
+        }
+        className="w-full py-2 rounded-lg bg-blue-600 text-white"
+      >
+        Apply
+      </button>
+    );
+  }
+
 
 
   const handleClick = () => {

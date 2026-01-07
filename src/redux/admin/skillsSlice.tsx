@@ -97,7 +97,8 @@ const skillsSlice = createSlice({
 
       // Create
       .addCase(createSkill.fulfilled, (state, action) => {
-        state.skills.push(action.payload);
+        state.skills = [action.payload, ...state.skills]; // add at the beginning
+        state.loading = false; // optional, if you use loading state
       })
 
       // Update
@@ -110,9 +111,7 @@ const skillsSlice = createSlice({
 
       // Delete
       .addCase(deleteSkill.fulfilled, (state, action) => {
-        state.skills = state.skills.filter(
-          (s) => s._id !== action.payload
-        );
+        state.skills = state.skills.filter((s) => s._id !== action.payload);
       });
   },
 });

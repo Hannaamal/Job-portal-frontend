@@ -186,7 +186,7 @@ export default function ApplyJobPage() {
           onClick={() => router.back()}
           className="w-full mt-3 text-sm text-gray-500"
         >
-          Save and close
+        close
         </button>
       </div>
     </div>

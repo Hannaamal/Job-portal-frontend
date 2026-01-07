@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import api from "@/lib/api";
+import { editJobSchema } from "@/validators/editJobValidator";
 
 interface EditJobSlideOverProps {
   isOpen: boolean;
@@ -112,6 +113,8 @@ export default function EditJobSlideOver({
     setError("");
 
     try {
+      
+       await editJobSchema.validate(form, { abortEarly: false });
       const payload = {
         title: form.title,
         description: form.description,
@@ -131,11 +134,15 @@ export default function EditJobSlideOver({
       await onSave(payload);
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Something went wrong");
-    } finally {
-      setLoading(false);
+       if (err.name === "ValidationError") {
+      setError(err.errors[0]); // show first error
+    } else {
+     setError(err.response?.data?.message || "Something went wrong");
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div
