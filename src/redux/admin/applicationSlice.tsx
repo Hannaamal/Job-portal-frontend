@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import api from "@/lib/api";
 
-import { scheduleInterviewThunk } from "@/redux/admin/interviewSlice";
+// import { scheduleInterviewThunk } from "@/redux/admin/interviewSlice";
 
 /* =========================
    TYPES (INSIDE SAME FILE)
@@ -140,26 +140,26 @@ const adminApplicationsSlice = createSlice({
         state.loading = false;
       });
 
-    /* SCHEDULE INTERVIEW */
-    builder.addCase(
-      scheduleInterviewThunk.fulfilled,
-      (
-        state,
-        action: PayloadAction<{ applicationId: string; interview: any }>
-      ) => {
-        const app = state.applications.find(
-          (a) => a._id === action.payload.applicationId
-        );
+    // /* SCHEDULE INTERVIEW */
+    // builder.addCase(
+    //   scheduleInterviewThunk.fulfilled,
+    //   (
+    //     state,
+    //     action: PayloadAction<{ applicationId: string; interview: any }>
+    //   ) => {
+    //     const app = state.applications.find(
+    //       (a) => a._id === action.payload.applicationId
+    //     );
 
-        if (app) {
-          const { _id, date, mode, meetingLink, location, interviewType } =
-            action.payload.interview;
+    //     if (app) {
+    //       const { _id, date, mode, meetingLink, location, interviewType } =
+    //         action.payload.interview;
 
-          app.interview = { _id, date, mode, meetingLink, location, interviewType };
-          app.status = "interview";
-        }
-      }
-    );
+    //       app.interview = { _id, date, mode, meetingLink, location, interviewType };
+    //       app.status = "interview";
+    //     }
+    //   }
+    // );
   },
 });
 

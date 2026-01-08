@@ -14,6 +14,7 @@ import savedJobsSliceReducer from "./jobs/saveJobSlice";
 import adminApplicationsSlice from "./admin/applicationSlice"
 import dashboardReducer from "./admin/dashboardSlice";
 import skillsReducer from "@/redux/admin/skillsSlice";
+import interviewSchedulerSliceReducer from "@/redux/admin/interviewSlice"
 
 
 
@@ -34,6 +35,7 @@ export const store = configureStore({
      adminApplications:adminApplicationsSlice,
       adminDashboard: dashboardReducer,
       skills: skillsReducer,
+      adminInterviews:interviewSchedulerSliceReducer
   },
 });
 

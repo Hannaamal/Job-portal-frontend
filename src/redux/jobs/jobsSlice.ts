@@ -9,6 +9,10 @@ const getToken = () => Cookies.get("auth_token");
    Async Thunks
 ======================= */
 
+
+
+
+
 interface FetchJobsParams {
   [key: string]: string | number | boolean;
 }
@@ -40,6 +44,10 @@ export interface Job {
   requiredSkills?: Skill[];
   createdAt?: string;
 }
+
+
+
+
 
 // Fetch all jobs
 export const fetchJobs = createAsyncThunk(
@@ -128,8 +136,8 @@ export const fetchJobsByCompany = createAsyncThunk(
 
 
 interface JobsState {
-  jobs: any[];
-  job: Job | null; // single job
+  jobs: Job[];        // ✅ array of Job
+  job: Job | null;    // single job
   selectedJob: any | null;
   loading: boolean;
   error: string | null;
@@ -138,7 +146,7 @@ interface JobsState {
 }
 
 const initialState: JobsState = {
-  jobs: [],
+ jobs: [],
   job: null,
   selectedJob: null,
   loading: false,

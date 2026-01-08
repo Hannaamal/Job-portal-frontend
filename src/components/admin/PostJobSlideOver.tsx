@@ -137,7 +137,9 @@ export default function PostJobSlideOver({
       alert(res.data.message);
       onClose();
     } catch (err: any) {
-      if (err.name === "ValidationError") {
+      if (err.name === "ValidationError")
+        {
+           console.log(err)
         // ✅ Yup errors
         setError(err.errors.join(", "));
       } else {

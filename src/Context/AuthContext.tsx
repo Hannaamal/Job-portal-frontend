@@ -38,7 +38,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   const [loading, setLoading] = useState(true);
-  console.log("AuthProvider token:", token, "loading:", loading);
 
   // Load token from cookies on refresh
 

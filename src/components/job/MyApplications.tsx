@@ -162,20 +162,39 @@ function InterviewEmptyState({ onBack }: { onBack: () => void }) {
 }
 
 function InterviewCard({ app }: any) {
+  const interview = app.interview;
+
+  if (!interview) return null;
+
   return (
     <div className="border border-gray-200 rounded-xl p-5 bg-white">
-      <h3 className="font-medium text-gray-900">{app.job?.title}</h3>
-      <p className="text-sm text-gray-500 mb-3">{app.company?.name}</p>
+      <h3 className="font-medium text-gray-900">
+        {app.job?.title}
+      </h3>
+
+      <p className="text-sm text-gray-500 mb-3">
+        {app.company?.name}
+      </p>
 
       <div className="text-sm text-gray-600 space-y-1">
-        <p>📅 {new Date(app.interviewDate).toLocaleDateString()}</p>
-        <p>⏰ {app.interviewTime}</p>
-        <p>💻 Online interview</p>
+        <p>📅 {new Date(interview.date).toLocaleDateString()}</p>
+
+        {interview.timeRange && (
+          <p>
+            ⏰ {interview.timeRange.start} – {interview.timeRange.end}
+          </p>
+        )}
+
+        <p>
+          {interview.medium === "Online" ? "💻 Online interview" : "🏢 Onsite interview"}
+        </p>
+
+        {interview.location && <p>📍 {interview.location}</p>}
       </div>
 
-      {app.meetingLink && (
+      {interview.meetingLink && (
         <a
-          href={app.meetingLink}
+          href={interview.meetingLink}
           target="_blank"
           className="inline-block mt-4 text-sm text-blue-600 hover:underline"
         >

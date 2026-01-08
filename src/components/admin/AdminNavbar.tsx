@@ -22,10 +22,11 @@ export default function AdminNavbar() {
   const links = [
       { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
       { name: "Jobs", href: "/admin/jobs", icon: Briefcase },
-    { name: "Companies", href: "/admin/companies", icon: Building2 },
-    { name: "Users", href: "/admin/users", icon: Users },
-    { name: "Applications", href: "/admin/applications", icon: Users },
-    { name: "Skills", href: "/admin/skills", icon: Briefcase },
+      { name: "Companies", href: "/admin/companies", icon: Building2 },
+      { name: "Users", href: "/admin/users", icon: Users },
+      { name: "Applications", href: "/admin/applications", icon: Users },
+      { name: "Skills", href: "/admin/skills", icon: Briefcase },
+      { name: "Interview-Scheduler", href: "/admin/interview-scheduler", icon: Briefcase },
     
 ];
 

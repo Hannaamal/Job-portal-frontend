@@ -1,17 +1,49 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import api from "@/lib/api";
 
+/* ======================
+   Types
+====================== */
+
+export interface AdminJob {
+  _id: string;
+  title: string;
+  description?: string;
+  location: string;
+  jobType?: string;
+  experienceLevel?: string;
+  company?: {
+    _id: string;
+    name: string;
+  };
+  createdAt?: string;
+}
+
+interface AdminJobsState {
+  jobs: AdminJob[];
+  loading: boolean;
+  success: boolean; // for create job
+  error: string | null;
+}
+
+/* ======================
+   Initial State
+====================== */
+
+const initialState: AdminJobsState = {
+  jobs: [],
+  loading: false,
+  success: false,
+  error: null,
+};
+
 interface JobCreateState {
   loading: boolean;
   success: boolean;
   error: string | null;
 }
 
-const initialState: JobCreateState = {
-  loading: false,
-  success: false,
-  error: null,
-};
+
 
 // ✅ Async thunk
 export const createJob = createAsyncThunk(
@@ -27,6 +59,21 @@ export const createJob = createAsyncThunk(
     }
   }
 );
+
+export const fetchAdminJobs = createAsyncThunk(
+  "adminJobs/fetchAll",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await api.get("/api/job");
+      return res.data.jobs as AdminJob[];
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch jobs"
+      );
+    }
+  }
+);
+
 
 const jobCreateSlice = createSlice({
   name: "jobCreate",
@@ -51,7 +98,19 @@ const jobCreateSlice = createSlice({
       .addCase(createJob.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      });
+      })
+       .addCase(fetchAdminJobs.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchAdminJobs.fulfilled, (state, action) => {
+        state.loading = false;
+        state.jobs = action.payload;
+      })
+      .addCase(fetchAdminJobs.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
   },
 });
 

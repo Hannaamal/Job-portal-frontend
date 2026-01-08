@@ -13,12 +13,18 @@ export const postJobSchema = yup.object({
     .min(20, "Job description must be at least 20 characters")
     .required("Job description is required"),
 
-  location: yup
+  
+  isRemote: yup.boolean(),
+
+location: yup
     .string()
     .trim()
-    .required("Location is required"),
+    .when("isRemote", (isRemote: any, schema: yup.StringSchema) => {
+      // Yup passes undefined sometimes, so use 'any'
+      return isRemote ? schema.nullable() : schema.required("Location is required for non-remote jobs");
+    }),
 
-  isRemote: yup.boolean(),
+
 
   jobType: yup
     .string()

@@ -1,139 +1,231 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/redux/store";
-import { scheduleInterviewThunk, updateInterviewThunk } from "@/redux/admin/interviewSlice";
-import { Application } from "@/redux/admin/applicationSlice";
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
+import { scheduleInterviewThunk } from "@/redux/admin/interviewSlice";
 
-interface Props {
-  application: Application;
-  onClose: () => void;
-  onSuccess: () => void;
-}
 
-type InterviewForm = {
+type InterviewMode = "Walk-in" | "Slot-based";
+type Medium = "Online" | "Onsite";
+type InterviewType = "HR" | "Technical" | "Managerial";
+
+interface FormState {
+  interviewMode: InterviewMode;
+  medium: Medium;
+  interviewType: InterviewType;
   date: string;
-  interviewType: "Technical" | "HR" | "Managerial";
-  mode: "Online" | "Onsite";
+  timeRange: {
+    start: string;
+    end: string;
+  };
   meetingLink: string;
   location: string;
-  notes: string;
+  instructions: string;
+}
+
+type Props = {
+  jobId: string;
+  onClose: () => void;
 };
 
-export default function ScheduleInterviewModal({ application, onClose, onSuccess }: Props) {
+export default function ScheduleInterviewModal({ jobId, onClose }: Props) {
   const dispatch = useDispatch<AppDispatch>();
+  const { loading } = useSelector(
+    (state: RootState) => state.adminInterviews
+  );
 
-  const [form, setForm] = useState<InterviewForm>({
+  const [form, setForm] = useState<FormState>({
+    interviewMode: "Walk-in",
+    medium: "Online",
+    interviewType: "HR",
     date: "",
-    interviewType: "Technical",
-    mode: "Online",
+    timeRange: {
+      start: "",
+      end: "",
+    },
     meetingLink: "",
     location: "",
-    notes: "",
+    instructions: "",
   });
 
-  useEffect(() => {
-    if (application.interview) {
-      setForm({
-        date: application.interview.date
-          ? new Date(application.interview.date).toISOString().slice(0, 10)
-          : "",
-        interviewType: application.interview.interviewType,
-        mode: application.interview.mode,
-        meetingLink: application.interview.meetingLink || "",
-        location: application.interview.location || "",
-        notes: application.interview.notes || "",
-      });
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+
+    if (name.startsWith("timeRange.")) {
+      const key = name.split(".")[1];
+      setForm((prev) => ({
+        ...prev,
+        timeRange: {
+          ...prev.timeRange,
+          [key]: value,
+        },
+      }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     }
-  }, [application.interview]);
+  };
 
   const handleSubmit = async () => {
-    try {
-      if (application.interview?._id) {
-        await dispatch(
-          updateInterviewThunk({ interviewId: application.interview._id, data: form })
-        ).unwrap();
-      } else {
-        await dispatch(
-          scheduleInterviewThunk({ applicationId: application._id, data: form })
-        ).unwrap();
-      }
+    await dispatch(
+      scheduleInterviewThunk({
+        jobId,
+        data: form,
+      })
+    );
 
-      onSuccess();
-      onClose();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to schedule interview");
-    }
+    onClose();
   };
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-6 w-full max-w-md">
-        <h2 className="text-lg font-semibold mb-4">
-          {application.interview ? "Edit Interview" : "Schedule Interview"}
+      <div className="bg-white w-full max-w-lg rounded-xl p-6">
+        <h2 className="text-xl font-semibold mb-4">
+          Schedule Interview
         </h2>
 
-        <div className="space-y-3">
-          <input
-            type="date"
-            className="w-full border p-2 rounded"
-            value={form.date}
-            onChange={(e) => setForm({ ...form, date: e.target.value })}
-          />
-
+        {/* Interview Mode */}
+        <label className="block mb-3">
+          <span className="text-sm font-medium">Interview Mode</span>
           <select
-            className="w-full border p-2 rounded"
-            value={form.interviewType}
-            onChange={(e) =>
-              setForm({ ...form, interviewType: e.target.value as InterviewForm["interviewType"] })
-            }
+            name="interviewMode"
+            value={form.interviewMode}
+            onChange={handleChange}
+            className="w-full mt-1 border rounded-lg p-2"
           >
-            <option value="Technical">Technical</option>
-            <option value="HR">HR</option>
-            <option value="Managerial">Managerial</option>
+            <option value="Walk-in">Walk-in</option>
+            <option value="Slot-based">Slot-based</option>
           </select>
+        </label>
 
+        {/* Medium */}
+        <label className="block mb-3">
+          <span className="text-sm font-medium">Medium</span>
           <select
-            className="w-full border p-2 rounded"
-            value={form.mode}
-            onChange={(e) => setForm({ ...form, mode: e.target.value as InterviewForm["mode"] })}
+            name="medium"
+            value={form.medium}
+            onChange={handleChange}
+            className="w-full mt-1 border rounded-lg p-2"
           >
             <option value="Online">Online</option>
             <option value="Onsite">Onsite</option>
           </select>
+        </label>
 
-          {form.mode === "Online" ? (
-            <input
-              type="text"
-              placeholder="Meeting link"
-              className="w-full border p-2 rounded"
-              value={form.meetingLink}
-              onChange={(e) => setForm({ ...form, meetingLink: e.target.value })}
-            />
-          ) : (
-            <input
-              type="text"
-              placeholder="Location"
-              className="w-full border p-2 rounded"
-              value={form.location}
-              onChange={(e) => setForm({ ...form, location: e.target.value })}
-            />
-          )}
+        {/* Interview Type */}
+        <label className="block mb-3">
+          <span className="text-sm font-medium">Interview Type</span>
+          <select
+            name="interviewType"
+            value={form.interviewType}
+            onChange={handleChange}
+            className="w-full mt-1 border rounded-lg p-2"
+          >
+            <option value="HR">HR</option>
+            <option value="Technical">Technical</option>
+            <option value="Managerial">Managerial</option>
+          </select>
+        </label>
 
-          <textarea
-            placeholder="Notes (optional)"
-            className="w-full border p-2 rounded"
-            value={form.notes}
-            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+        {/* Date */}
+        <label className="block mb-3">
+          <span className="text-sm font-medium">Date</span>
+          <input
+            type="date"
+            name="date"
+            value={form.date}
+            onChange={handleChange}
+            className="w-full mt-1 border rounded-lg p-2"
           />
+        </label>
+
+        {/* Time Range */}
+        <div className="flex gap-3 mb-3">
+          <label className="flex-1">
+            <span className="text-sm font-medium">Start Time</span>
+            <input
+              type="time"
+              name="timeRange.start"
+              value={form.timeRange.start}
+              onChange={handleChange}
+              className="w-full mt-1 border rounded-lg p-2"
+            />
+          </label>
+
+          <label className="flex-1">
+            <span className="text-sm font-medium">End Time</span>
+            <input
+              type="time"
+              name="timeRange.end"
+              value={form.timeRange.end}
+              onChange={handleChange}
+              className="w-full mt-1 border rounded-lg p-2"
+            />
+          </label>
         </div>
 
-        <div className="flex justify-end gap-3 mt-6">
-          <button onClick={onClose} className="text-gray-500">Cancel</button>
-          <button onClick={handleSubmit} className="bg-blue-600 text-white px-4 py-2 rounded">
-            {application.interview ? "Update" : "Schedule"}
+        {/* Conditional Fields */}
+        {form.medium === "Online" && (
+          <label className="block mb-3">
+            <span className="text-sm font-medium">Meeting Link</span>
+            <input
+              type="text"
+              name="meetingLink"
+              value={form.meetingLink}
+              onChange={handleChange}
+              className="w-full mt-1 border rounded-lg p-2"
+              placeholder="https://meet.google.com/..."
+            />
+          </label>
+        )}
+
+        {form.medium === "Onsite" && (
+          <label className="block mb-3">
+            <span className="text-sm font-medium">Location</span>
+            <input
+              type="text"
+              name="location"
+              value={form.location}
+              onChange={handleChange}
+              className="w-full mt-1 border rounded-lg p-2"
+              placeholder="Office address"
+            />
+          </label>
+        )}
+
+        {/* Instructions */}
+        <label className="block mb-4">
+          <span className="text-sm font-medium">Instructions</span>
+          <textarea
+            name="instructions"
+            value={form.instructions}
+            onChange={handleChange}
+            className="w-full mt-1 border rounded-lg p-2"
+            rows={3}
+          />
+        </label>
+
+        {/* Actions */}
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg border"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? "Scheduling..." : "Schedule"}
           </button>
         </div>
       </div>

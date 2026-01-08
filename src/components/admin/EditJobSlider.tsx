@@ -64,11 +64,16 @@ export default function EditJobSlideOver({
             salaryMax: job.salaryRange?.max || "",
             requiredSkills:
               job.requiredSkills
-                ?.map((s: any) => s._id)
-                .filter((id: string) => allSkills.some((sk) => sk._id === id)) ||
-              [],
+                ?.map((s: { _id: string }) => s._id)
+                .filter((id: string) =>
+                  allSkills.some((sk: { _id: string }) => sk._id === id)
+                ) || [],
+
             company:
-              allCompanies.find((c) => c._id === job.company?._id)?._id || "",
+              allCompanies.find(
+                (c: { _id: string }) => c._id === job.company?._id
+              )?._id || "",
+
             expiresAt: job.expiresAt ? job.expiresAt.slice(0, 10) : "",
           });
         }
@@ -87,7 +92,10 @@ export default function EditJobSlideOver({
   ) => {
     const { name, value, type } = e.target as HTMLInputElement;
     if (type === "checkbox") {
-      setForm((prev) => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
+      setForm((prev) => ({
+        ...prev,
+        [name]: (e.target as HTMLInputElement).checked,
+      }));
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
@@ -105,7 +113,8 @@ export default function EditJobSlideOver({
     });
   };
 
-  const isSkillSelected = (skillId: string) => form.requiredSkills.includes(skillId);
+  const isSkillSelected = (skillId: string) =>
+    form.requiredSkills.includes(skillId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,8 +122,7 @@ export default function EditJobSlideOver({
     setError("");
 
     try {
-      
-       await editJobSchema.validate(form, { abortEarly: false });
+      await editJobSchema.validate(form, { abortEarly: false });
       const payload = {
         title: form.title,
         description: form.description,
@@ -134,15 +142,15 @@ export default function EditJobSlideOver({
       await onSave(payload);
       onClose();
     } catch (err: any) {
-       if (err.name === "ValidationError") {
-      setError(err.errors[0]); // show first error
-    } else {
-     setError(err.response?.data?.message || "Something went wrong");
+      if (err.name === "ValidationError") {
+        setError(err.errors[0]); // show first error
+      } else {
+        setError(err.response?.data?.message || "Something went wrong");
+      }
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div
@@ -177,7 +185,9 @@ export default function EditJobSlideOver({
         <form onSubmit={handleSubmit} className="space-y-5 text-sm">
           {/* Title */}
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Job title</label>
+            <label className="block text-xs text-gray-500 mb-1">
+              Job title
+            </label>
             <input
               name="title"
               value={form.title}
@@ -190,7 +200,9 @@ export default function EditJobSlideOver({
 
           {/* Description */}
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Description</label>
+            <label className="block text-xs text-gray-500 mb-1">
+              Description
+            </label>
             <textarea
               name="description"
               value={form.description}
@@ -205,7 +217,9 @@ export default function EditJobSlideOver({
           {/* Location + Remote */}
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <label className="block text-xs text-gray-500 mb-1">Location</label>
+              <label className="block text-xs text-gray-500 mb-1">
+                Location
+              </label>
               <input
                 name="location"
                 value={form.location}
@@ -328,7 +342,9 @@ export default function EditJobSlideOver({
 
           {/* Expiry */}
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Expiry Date</label>
+            <label className="block text-xs text-gray-500 mb-1">
+              Expiry Date
+            </label>
             <input
               type="date"
               name="expiresAt"

@@ -125,11 +125,11 @@ export default function Navbar() {
             {/* Notifications */}
             <Link
               href="/notifications"
-              className={getIconButtonClass("/notifications")}
+              className={`relative ${getIconButtonClass("/notifications")}`}
             >
               <NotificationsIcon className={getIconColor("/notifications")} />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1 rounded-full">
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1 rounded-full min-w-[18px] h-4 flex items-center justify-center text-center font-bold">
                   {unreadCount}
                 </span>
               )}

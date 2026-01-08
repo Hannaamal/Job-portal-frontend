@@ -40,7 +40,7 @@ export default function AdminJobsPage() {
     setMounted(true);
   }, []);
   useEffect(() => {
-  dispatch(fetchAdminJobs(undefined));
+  dispatch(fetchAdminJobs());
 }, [dispatch]);
 
 
@@ -204,20 +204,18 @@ export default function AdminJobsPage() {
 
         {mounted && (
           <DataGrid
-            rows={jobs}
-            columns={columns}
-            loading={loading}
-            getRowId={(row) => row._id}
-            autoHeight
-            density="compact"
-            pageSizeOptions={[5, 10, 20]}
-            disableRowSelectionOnClick
-            initialState={{
-              pagination: { paginationModel: { pageSize: 10, page: 0 } },
-            }}
-            localeText={{
-              noRowsLabel: "No jobs match your filters",
-            }}
+  rows={jobs}
+  columns={columns}
+  getRowId={(row) => row._id}
+  autoHeight
+  pageSizeOptions={[5, 10, 20]}
+  initialState={{
+    pagination: { paginationModel: { page: 0, pageSize: 10 } },
+  }}
+
+
+
+
             sx={{
               border: "none",
 
