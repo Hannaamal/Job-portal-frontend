@@ -8,9 +8,8 @@ import type { AppDispatch } from "@/redux/store";
 interface FilterItem {
   label: string;
   paramKey: string;
-  options: string[]; 
+  options: string[]; // ✅ required
 }
-
 
 export default function JobFilterRow() {
   const dispatch = useDispatch<AppDispatch>();
@@ -45,9 +44,19 @@ export default function JobFilterRow() {
 
     /* Salary logic */
     if (activeFilters.salary) {
-      const [min, max] = activeFilters.salary.split("-");
-      filterPayload.salaryMin = Number(min);
-      if (max && max !== "+") filterPayload.salaryMax = Number(max);
+      const value = activeFilters.salary;
+
+      if (value.endsWith("+")) {
+        // ✅ "200000+" → salary >= 200000
+        const min = Number(value.replace("+", ""));
+        filterPayload.salaryMin = min;
+      } else {
+        // ✅ "20000-50000"
+        const [min, max] = value.split("-");
+        filterPayload.salaryMin = Number(min);
+        filterPayload.salaryMax = Number(max);
+      }
+
       delete filterPayload.salary;
     }
 

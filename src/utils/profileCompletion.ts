@@ -11,7 +11,6 @@ export const calculateProfileCompletion = (profile: any) => {
     profile.education?.length,
     profile.experience?.length,
     profile.resume?.url,
-    profile.preferences?.jobType,
   ];
 
   const filled = fields.filter(Boolean).length;

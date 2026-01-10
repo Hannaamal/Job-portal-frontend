@@ -1,5 +1,6 @@
 "use client";
 
+import JobShareButtons from "../common/ShareButton";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "next/navigation";
@@ -7,6 +8,9 @@ import { fetchJobById } from "@/redux/jobs/jobsSlice";
 import { RootState, AppDispatch } from "@/redux/store";
 import { Job } from "@/redux/jobs/jobsSlice";
 import JobApplyButton from "./jobApplicationButton";
+import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
+import BookmarkIcon from "@mui/icons-material/Bookmark";
+import { removeSavedJob, saveJob } from "@/redux/jobs/saveJobSlice";
 
 export default function JobDetailsPage() {
   const params = useParams();
@@ -14,12 +18,23 @@ export default function JobDetailsPage() {
 
   const dispatch = useDispatch<AppDispatch>();
   const { job, loading, error } = useSelector((state: RootState) => state.jobs);
+  const savedJobs = useSelector(
+    (state: RootState) => state.savedJobs.savedJobs
+  );
+
+  const isSaved = job ? savedJobs.some((s) => s.job._id === job._id) : false;
 
   useEffect(() => {
     if (jobId) {
       dispatch(fetchJobById(jobId));
     }
   }, [dispatch, jobId]);
+
+  const handleToggleSave = () => {
+    if (!job) return;
+    if (isSaved) dispatch(removeSavedJob(job._id));
+    else dispatch(saveJob(job._id));
+  };
 
   /* =========================
      Loading State
@@ -54,6 +69,21 @@ export default function JobDetailsPage() {
     );
   }
 
+
+  const shareJob = async () => {
+  const url = window.location.href;
+
+  if (navigator.share) {
+    await navigator.share({
+      title: job.title,
+      url,
+    });
+  } else {
+    window.open(`https://wa.me/?text=${encodeURIComponent(url)}`);
+  }
+};
+
+
   /* =========================
      TypeScript-safe company object
   ========================== */
@@ -63,8 +93,22 @@ export default function JobDetailsPage() {
      UI
   ========================== */
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <div className="bg-white shadow-md rounded-lg p-6">
+    
+      
+        <div className="relative bg-white shadow-md rounded-lg flex justify-center items-center px-4 p-6"> 
+            <div className=" relative bg-white  max-w-4xl  shadow-md rounded-lg p-6">
+        {/* Bookmark Button */}
+        <button
+          onClick={handleToggleSave}
+          className="absolute top-4 right-4 z-20 p-2 rounded-full hover:bg-gray-100"
+          aria-label="Save job"
+        >
+          {isSaved ? (
+            <BookmarkIcon className="text-blue-600" />
+          ) : (
+            <BookmarkBorderIcon className="text-gray-500" fontSize="medium" />
+          )}
+        </button>
         {/* Job Title */}
         <h1 className="text-3xl font-bold mb-2">{job.title}</h1>
 
@@ -120,12 +164,18 @@ export default function JobDetailsPage() {
           <p className="text-gray-700 whitespace-pre-line">{job.description}</p>
         </div>
 
-        {/* Apply Button */}
-        {/* Apply Button */}
-<div className="mt-4 w-full md:w-auto">
-  <JobApplyButton jobId={job._id as string} />
+
+{/* Share Section */}
+<div className="mt-6">
+  <p className="text-sm text-gray-600 mb-2">Share this job</p>
+  <JobShareButtons jobId={job._id} />
 </div>
 
+
+        {/* Apply Button */}
+        <div className="mt-4 w-full md:w-auto">
+          <JobApplyButton jobId={job._id as string} />
+        </div>
       </div>
     </div>
   );

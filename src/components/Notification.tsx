@@ -31,10 +31,7 @@ export default function NotificationsPage() {
     router.push(`/job/${jobId}`);
   };
 
-  const handleMarkAsRead = (
-    e: React.MouseEvent,
-    notifId: string
-  ) => {
+  const handleMarkAsRead = (e: React.MouseEvent, notifId: string) => {
     e.stopPropagation();
     dispatch(markAsRead(notifId));
   };
@@ -60,13 +57,15 @@ export default function NotificationsPage() {
           >
             <div>
               <p className="text-gray-800 font-medium">
-                {notif.message ||
-                  `Update on job: ${notif.job?.title}`}
+                {notif.message || `Update on job: ${notif.job?.title}`}
               </p>
 
               {notif.job && (
                 <p className="text-sm text-gray-500 mt-1">
-                  {notif.job.company} • {notif.job.location}
+                  {typeof notif.job.company === "object"
+                    ? notif.job.company.name
+                    : "Company not disclosed"}{" "}
+                  • {notif.job.location}
                 </p>
               )}
 

@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import Cookies from "js-cookie";
 import api from "@/lib/api";
 
@@ -9,45 +9,36 @@ const getToken = () => Cookies.get("auth_token");
    Async Thunks
 ======================= */
 
-
-
-
-
-interface FetchJobsParams {
-  [key: string]: string | number | boolean;
-}
-export interface SalaryRange {
-  min: number;
-  max: number;
-}
-export interface Company {
-  _id: string;
-  name: string;
-  logo?: string;
-  location?: string;
-}
-
-export interface Skill {
-  _id: string;
-  name: string;
-}
-
 export interface Job {
   _id: string;
   title: string;
   description: string;
-  company: Company | string; // <-- can be populated or just ID
   location: string;
- salaryRange?: SalaryRange;
   jobType?: string;
   experienceLevel?: string;
-  requiredSkills?: Skill[];
-  createdAt?: string;
+  salaryRange?: { min: number; max: number };
+  company: {
+    _id: string;
+    name: string;
+    logo?: string;
+    location?: string;
+  };
+  requiredSkills?: { _id: string; name: string }[];
 }
 
+export interface FetchJobsParams {
+  [key: string]: string | number | boolean;
+}
 
-
-
+interface JobsState {
+  jobs: Job[];
+  job: Job | null;
+  selectedJob: Job | null;
+  loading: boolean;
+  error: string | null;
+  page: number;
+  pages: number;
+}
 
 // Fetch all jobs
 export const fetchJobs = createAsyncThunk(
@@ -130,15 +121,10 @@ export const fetchJobsByCompany = createAsyncThunk(
 // Job Type
 // =======================
 
-
-
-
-
-
 interface JobsState {
-  jobs: Job[];        // ✅ array of Job
-  job: Job | null;    // single job
-  selectedJob: any | null;
+  jobs: Job[]; // ✅ array of Job
+  job: Job | null; // single job
+  selectedJob: Job | null;
   loading: boolean;
   error: string | null;
   page: number;
@@ -146,9 +132,9 @@ interface JobsState {
 }
 
 const initialState: JobsState = {
- jobs: [],
+  jobs: [],
   job: null,
-  selectedJob: null,
+  selectedJob: null as Job | null,
   loading: false,
   error: null,
   page: 1,
@@ -159,15 +145,17 @@ const jobsSlice = createSlice({
   name: "jobs",
   initialState,
   reducers: {
-    setSelectedJob(state, action) {
+    setSelectedJob: (state, action: PayloadAction<Job | null>) => {
       state.selectedJob = action.payload;
     },
+
     clearSelectedJob(state) {
       state.selectedJob = null;
     },
   },
   extraReducers: (builder) => {
     builder
+
       // Fetch all jobs
       .addCase(fetchJobs.pending, (state) => {
         state.loading = true;

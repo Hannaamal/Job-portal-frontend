@@ -1,478 +1,694 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchMyProfile,
   updateMyProfile,
   fetchSkills,
+  selectProfile,
+  selectSkills,
+  selectUser,
 } from "@/redux/profileSlice";
-import { RootState, AppDispatch } from "@/redux/store";
+import { AppDispatch } from "@/redux/store";
 import { calculateProfileCompletion } from "@/utils/profileCompletion";
-import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
-import { ProfileForm } from "@/types/profile";
-import api from "@/lib/api";
 
 export default function ProfilePage() {
   const dispatch = useDispatch<AppDispatch>();
-  const router = useRouter();
+  const profile = useSelector(selectProfile);
+  const skills = useSelector(selectSkills);
 
-  const { user, profile, skills, loading } = useSelector(
-    (state: RootState) => state.profile
-  );
-
-  const [form, setForm] = useState<ProfileForm>({
+  console.log("RAW skills selector:", skills);
+  console.log("Is array?", Array.isArray(skills));
+  const user = useSelector(selectUser);
+  const [form, setForm] = useState<any>({
+    phone: "",
+    location: "",
+    title: "",
+    experienceLevel: "",
+    summary: "",
     skills: [],
     education: [],
     experience: [],
-    avatar: null,
+    avatar: "",
     resume: null,
   });
+  const [editingEducation, setEditingEducation] = useState<number | null>(null);
+  const [editingExperience, setEditingExperience] = useState<number | null>(
+    null
+  );
+  const completion = calculateProfileCompletion(profile);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  /* ================= FETCH DATA ================= */
+  /* ================= LOAD ================= */
   useEffect(() => {
     dispatch(fetchMyProfile());
     dispatch(fetchSkills());
   }, [dispatch]);
 
   useEffect(() => {
-    if (profile) {
-      setForm({
-        ...profile,
-        avatar: profile.avatar || "",
-      });
-    }
+    return () => {
+      if (form.avatar instanceof File) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [form.avatar]);
+
+  useEffect(() => {
+    if (!profile) return;
+    setForm({
+      phone: profile.phone || "",
+      location: profile.location || "",
+      title: profile.title || "",
+      experienceLevel: profile.experienceLevel || "",
+      summary: profile.summary || "",
+      skills: Array.isArray(profile.skills)
+        ? profile.skills.map((s: any) => (typeof s === "string" ? s : s._id))
+        : [],
+      education: profile.education || [],
+      experience: profile.experience || [],
+      avatar: profile.avatar || "",
+      resume: profile.resume || null,
+    });
   }, [profile]);
 
-  if (loading || !user) return <p className="p-6">Loading profile...</p>;
-
-  const completion = calculateProfileCompletion(profile);
-
-  /* ================= HANDLERS ================= */
-  const handleChange = (e: any) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleAvatarClick = () => fileInputRef.current?.click();
-
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setForm({ ...form, avatar: e.target.files[0] });
-    }
-  };
-  const handleAvatarSave = async () => {
-    if (!(form.avatar instanceof File)) return;
-
-    try {
-      const formData = new FormData();
-      formData.append("avatar", form.avatar);
-
-      // Separate endpoint for avatar
-      await api.put("/api/profile/me/avatar", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      router.refresh(); // refresh profile after upload
-    } catch (err) {
-      console.error("Avatar upload failed", err);
-    }
-  };
-
-  const removeAvatar = () => setForm({ ...form, avatar: "" });
-
   const toggleSkill = (skillId: string) => {
-    const exists = form.skills?.includes(skillId);
-    setForm({
-      ...form,
-      skills: exists
-        ? form.skills.filter((id: string) => id !== skillId)
-        : [...(form.skills || []), skillId],
+    setForm((prev: any) => {
+      const exists = prev.skills.includes(skillId);
+
+      return {
+        ...prev,
+        skills: exists
+          ? prev.skills.filter((id: string) => id !== skillId)
+          : [...prev.skills, skillId],
+      };
     });
   };
 
-  const addEducation = () => {
-    setForm({
-      ...form,
-      education: [
-        ...(form.education || []),
-        { degree: "", institution: "", year: "" },
-      ],
-    });
-  };
-
-  const updateEducation = (index: number, field: string, value: string) => {
-    const updated = [...form.education];
-    updated[index][field] = value;
-    setForm({ ...form, education: updated });
-  };
-
-  const deleteEducation = (index: number) => {
-    const updated = form.education.filter((_: any, i: number) => i !== index);
-    setForm({ ...form, education: updated });
-  };
-
-  const addExperience = () => {
-    setForm({
-      ...form,
-      experience: [
-        ...(form.experience || []),
-        { company: "", role: "", description: "" },
-      ],
-    });
-  };
-
-  const updateExperience = (index: number, field: string, value: string) => {
-    const updated = [...form.experience];
-    updated[index][field] = value;
-    setForm({ ...form, experience: updated });
-  };
-
-  const handleSave = async () => {
-    try {
-      const formData = new FormData();
-
-      // ✅ SIMPLE FIELDS
-      const simpleFields: (keyof ProfileForm)[] = [
-        "phone",
-        "location",
-        "title",
-        "summary",
-        "experienceLevel",
-      ];
-
-      simpleFields.forEach((field) => {
-        const value = form[field];
-
-        if (typeof value === "string" && value.trim()) {
-          formData.append(field, value);
-        }
-      });
-
-      // ✅ ARRAYS (JSON)
-      formData.append("skills", JSON.stringify(form.skills || []));
-
-      formData.append(
-        "education",
-        JSON.stringify(
-          (form.education || []).filter(
-            (e: any) => e.degree || e.institution || e.year
-          )
-        )
-      );
-
-      formData.append(
-        "experience",
-        JSON.stringify(
-          (form.experience || []).filter(
-            (e: any) => e.company || e.role || e.description
-          )
-        )
-      );
-
-      // ✅ FILES (NO JSON.stringify)
-      if (form.avatar instanceof File) {
-        formData.append("avatar", form.avatar);
-      }
-
-      if (form.resume instanceof File) {
-        formData.append("resume", form.resume);
-      }
-
-      await dispatch(updateMyProfile(formData)).unwrap();
-      router.refresh();
-    } catch (error) {
-      console.error("Profile update failed", error);
+  const avatarPreview = useMemo(() => {
+    if (form.avatar instanceof File) {
+      return URL.createObjectURL(form.avatar);
     }
+    // If avatar is a relative path, prepend the backend URL
+    if (form.avatar && !form.avatar.startsWith('http')) {
+      return `${process.env.NEXT_PUBLIC_BACKEND_URL}${form.avatar}`;
+    }
+    return form.avatar || "/default-avatar.png";
+  }, [form.avatar]);
+
+  const handleSubmit = () => {
+    const fd = new FormData();
+    Object.entries(form).forEach(([key, value]: any) => {
+      if (value === null || value === undefined) return;
+      if (["skills", "education", "experience"].includes(key)) {
+        fd.append(key, JSON.stringify(value));
+      } else if (value instanceof File) {
+        fd.append(key, value);
+      } else if (key === "resume" && value && typeof value === "object" && value.url) {
+        // If resume is an object with url (existing resume), don't send it
+        // The backend should handle existing resumes separately
+        return;
+      } else {
+        fd.append(key, value);
+      }
+    });
+    dispatch(updateMyProfile(fd));
   };
 
+  /* ================= UI ================= */
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-6">
-      {/* ================= HEADER ================= */}
-
-      <div className="bg-white shadow rounded-lg p-6 flex items-center gap-6 relative">
-        {/* Avatar */}
-        <div className="relative w-24 h-24">
-          {/* Avatar */}
-          <div className="relative w-24 h-24">
-            <img
-              src={
-                form.avatar
-                  ? typeof form.avatar === "string"
-                    ? form.avatar
-                    : URL.createObjectURL(form.avatar)
-                  : "/default-avatar.png"
-              }
-              alt="Profile"
-              className="w-24 h-24 rounded-full object-cover border border-gray-300"
-            />
-
-            {/* Change Avatar */}
-            <button
-              type="button"
-              onClick={handleAvatarClick}
-              className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center border-2 border-white hover:bg-green-700 transition"
-              title="Change Profile Picture"
-            >
-              +
-            </button>
-
-            {/* Remove Avatar */}
-            {form.avatar && (
-              <button
-                type="button"
-                onClick={removeAvatar}
-                className="absolute top-0 right-0 w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center border-2 border-white hover:bg-red-700"
-                title="Remove Profile Picture"
-              >
-                ×
-              </button>
-            )}
-          </div>
-
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            className="hidden"
-            onChange={handleAvatarChange}
-          />
-        </div>
-
-        {/* User Info */}
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold">{user.name}</h1>
-          <p className="text-gray-500">{user.email}</p>
-
-          {/* Profile Completion */}
-          <div className="mt-4 w-full max-w-sm">
-            <div className="flex justify-between text-sm mb-1">
-              <span>Profile Completion</span>
-              <span>{completion}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-green-600 h-2 rounded-full"
-                style={{ width: `${completion}%` }}
+      {/* Profile Header */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-8 rounded-2xl shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            {/* Avatar */}
+            <div className="relative group">
+              <img
+                src={avatarPreview}
+                alt="Profile"
+                className="w-24 h-24 rounded-full object-cover shadow-lg cursor-pointer border-2 "
               />
+
+              <input
+                type="file"
+                accept="image/*"
+                className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                onChange={(e) =>
+                  setForm({ ...form, avatar: e.target.files?.[0] })
+                }
+              />
+              <div className="absolute inset-0 rounded-full bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-0">
+                <span className="text-white text-xs font-medium">
+                  {form.avatar ? "Change" : "+"}
+                </span>
+              </div>
+            </div>
+
+            {/* User Info */}
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="text-2xl font-bold text-gray-800">
+                  {user?.name}
+                </h1>
+                <span className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0" />
+              </div>
+              <p className="text-gray-600 mb-4">{user?.email}</p>
+
+              {/* Progress */}
+              <div className="mt-4 w-full max-w-sm">
+                <div className="flex justify-between text-sm mb-1">
+                  <span>Profile Completion</span>
+                  <span>{completion}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-green-600 h-2 rounded-full"
+                    style={{ width: `${completion}%` }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ================= SAVE PROFILE BUTTON ================= */}
-      <div className="mt-4 flex justify-end">
+      {/* Divider */}
+      <div className="border-t-2 border-gray-100 my-8"></div>
+
+      {/* Basic Information */}
+      <div className="bg-white p-6">
+        <h3 className="font-semibold text-gray-800 mb-4">Basic Information</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input
+            type="text"
+            placeholder="Phone Number"
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+          />
+          <input
+            type="text"
+            placeholder="Location"
+            value={form.location}
+            onChange={(e) => setForm({ ...form, location: e.target.value })}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+          />
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="border-t-2 border-gray-100 my-8"></div>
+
+      {/* Resume */}
+      <div className="bg-white p-6">
+        <h2 className="font-semibold text-gray-800 mb-4">Resume (PDF only)</h2>
+        {form.resume && (
+          <div className="mb-4">
+            {form.resume instanceof File ? (
+              <p className="text-green-600">
+                Resume file selected: {form.resume.name}
+              </p>
+            ) : form.resume.url ? (
+              <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <svg
+                    className="w-8 h-8 text-red-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  <div>
+                    <p className="font-medium text-gray-800">Resume.pdf</p>
+                    <a
+                      href={form.resume.url}
+                      target="_blank"
+                      className="text-green-600 hover:text-green-700 text-sm"
+                    >
+                      View Resume
+                    </a>
+                  </div>
+                </div>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 hover:border-blue-400 transition-colors">
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    className="hidden"
+                    id="resume-upload-new"
+                    onChange={(e) => setForm({ ...form, resume: e.target.files?.[0] })}
+                  />
+                  <label
+                    htmlFor="resume-upload-new"
+                    className="cursor-pointer text-gray-600 hover:text-gray-800 text-sm"
+                  >
+                    Upload Another
+                  </label>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
+        {!form.resume && (
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+            <input
+              type="file"
+              accept=".pdf"
+              className="hidden"
+              id="resume-upload"
+              onChange={(e) => setForm({ ...form, resume: e.target.files?.[0] })}
+            />
+            <label
+              htmlFor="resume-upload"
+              className="cursor-pointer text-gray-600 hover:text-gray-800"
+            >
+              <svg
+                className="w-8 h-8 mx-auto mb-2 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                />
+              </svg>
+              <span className="text-sm">Click to upload PDF resume</span>
+            </label>
+          </div>
+        )}
+      </div>
+
+      {/* Divider */}
+      <div className="border-t-2 border-gray-100 my-8"></div>
+
+      {/* Professional Details */}
+      <div className="bg-white p-6">
+        <h3 className="font-semibold text-gray-800 mb-4">
+          Professional Details
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Job Title
+            </label>
+            <input
+              type="text"
+              placeholder="e.g., Frontend Developer"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Experience Level
+            </label>
+            <select
+              value={form.experienceLevel}
+              onChange={(e) =>
+                setForm({ ...form, experienceLevel: e.target.value })
+              }
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            >
+              <option value="">Select experience level</option>
+              <option value="Fresher">Fresher</option>
+              <option value="1-3">1–3 years</option>
+              <option value="3-5">3–5 years</option>
+              <option value="5+">5+ years</option>
+            </select>
+          </div>
+        </div>
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Professional Summary
+          </label>
+          <textarea
+            rows={4}
+            placeholder="Tell us about your professional background and skills..."
+            value={form.summary}
+            onChange={(e) => setForm({ ...form, summary: e.target.value })}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+          />
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="border-t-2 border-gray-100 my-8"></div>
+
+      {/* Skills */}
+      <div className="bg-white shadow rounded-lg p-6">
+        <h2 className="font-semibold mb-4">Skills</h2>
+
+        {/* Selected skills (top pills) */}
+        {form.skills.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {skills
+              .filter((s: any) => form.skills.includes(s._id))
+              .map((skill: any) => (
+                <span
+                  key={skill._id}
+                  onClick={() => toggleSkill(skill._id)}
+                  className="cursor-pointer px-3 py-1 text-xs rounded-full
+                    bg-gray-900 text-white hover:bg-gray-800 transition"
+                >
+                  {skill.name} ✕
+                </span>
+              ))}
+          </div>
+        )}
+
+        {/* All skills */}
+        {skills.length === 0 ? (
+          <p className="text-sm text-gray-500">Loading skills...</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {skills.map((skill: any) => {
+              const selected = form.skills.includes(String(skill._id));
+              return (
+                <button
+                  key={skill._id}
+                  onClick={() => toggleSkill(skill._id)}
+                  className={`px-3 py-1 rounded-full text-sm border transition ${
+                    selected
+                      ? "bg-green-600 text-white border-green-600"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {skill.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Education */}
+      <div className="bg-white p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="font-semibold text-gray-800">Education</h2>
+          <button
+            onClick={() =>
+              setForm((prev: any) => ({
+                ...prev,
+                education: [
+                  ...prev.education,
+                  { degree: "", institution: "", year: "" },
+                ],
+              }))
+            }
+            className="bg-blue-600 text-white px-2 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+          >
+            + Add
+          </button>
+        </div>
+
+        {/* Show as cards when not editing */}
+        {form.education.length === 0 ? (
+          <p className="text-gray-500 italic">No education added yet</p>
+        ) : (
+          <div className="space-y-4">
+            {form.education.map((edu: any, i: number) => (
+              <div
+                key={i}
+                className={`bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border-l-4 border-blue-500 shadow-sm cursor-pointer transition-colors ${
+                  editingEducation === i
+                    ? "bg-gradient-to-r from-blue-100 to-indigo-100"
+                    : "hover:bg-gradient-to-r hover:from-blue-100 hover:to-indigo-100"
+                }`}
+                onClick={() =>
+                  setEditingEducation(editingEducation === i ? null : i)
+                }
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    {/* Read-only view */}
+                    {editingEducation !== i && (
+                      <div className="flex justify-between items-center">
+                        {/* Left side */}
+                        <div>
+                          <p className="text-sm font-semibold text-gray-800">
+                            {edu.degree || "Degree not specified"}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            {edu.institution || "Institution not specified"}
+                          </p>
+                        </div>
+
+                        {/* Right side */}
+                        <div className="text-sm text-gray-700">
+                          {edu.year || "Year"}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Editable fields (shown when clicked) */}
+                    {editingEducation === i && (
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          placeholder="Degree"
+                          value={edu.degree}
+                          onChange={(e) => {
+                            const newEducation = [...form.education];
+                            newEducation[i].degree = e.target.value;
+                            setForm({ ...form, education: newEducation });
+                          }}
+                          className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Institution"
+                          value={edu.institution}
+                          onChange={(e) => {
+                            const newEducation = [...form.education];
+                            newEducation[i].institution = e.target.value;
+                            setForm({ ...form, education: newEducation });
+                          }}
+                          className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <input
+                          type="number"
+                          placeholder="Year"
+                          value={edu.year}
+                          onChange={(e) => {
+                            const newEducation = [...form.education];
+                            newEducation[i].year = e.target.value;
+                            setForm({ ...form, education: newEducation });
+                          }}
+                          className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const newEducation = form.education.filter(
+                        (_: any, index: number) => index !== i
+                      );
+                      setForm({ ...form, education: newEducation });
+                      setEditingEducation(null);
+                    }}
+                    className="ml-2 text-red-500 hover:text-red-700 transition-colors text-sm"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Divider */}
+      <div className="border-t-2 border-gray-100 my-8"></div>
+
+      {/* Experience */}
+      <div className="bg-white p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="font-semibold text-gray-800">Experience</h2>
+          <button
+            onClick={() =>
+              setForm((prev: any) => ({
+                ...prev,
+                experience: [
+                  ...prev.experience,
+                  {
+                    company: "",
+                    role: "",
+                    startDate: "",
+                    endDate: "",
+                    description: "",
+                  },
+                ],
+              }))
+            }
+            className="bg-green-600 text-white px-2 py-2 rounded-lg hover:bg-green-700 transition-colors shadow-md"
+          >
+            + Add
+          </button>
+        </div>
+
+        {/* Show as cards when not editing */}
+        {form.experience.length === 0 ? (
+          <p className="text-gray-500 italic">No experience added yet</p>
+        ) : (
+          <div className="space-y-4">
+            {form.experience.map((exp: any, i: number) => (
+              <div
+                key={i}
+                className={`bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border-l-4 border-green-500 shadow-sm cursor-pointer transition-colors ${
+                  editingExperience === i
+                    ? "bg-gradient-to-r from-green-100 to-emerald-100"
+                    : "hover:bg-gradient-to-r hover:from-green-100 hover:to-emerald-100"
+                }`}
+                onClick={() =>
+                  setEditingExperience(editingExperience === i ? null : i)
+                }
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    {/* Read-only view */}
+                    {editingExperience !== i && (
+                      <div className="flex justify-between items-start">
+                        {/* Left side */}
+                        <div>
+                          <p className="text-sm font-semibold text-gray-800">
+                            {exp.role || "Role not specified"}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            {exp.company || "Company not specified"}
+                          </p>
+                          {exp.description && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              {exp.description}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Right side */}
+                        <div className="text-xs text-gray-700 text-right">
+                          <p>
+                            {exp.startDate
+                              ? new Date(exp.startDate).toLocaleDateString()
+                              : "Start"}
+                            {" - "}
+                            {exp.endDate
+                              ? new Date(exp.endDate).toLocaleDateString()
+                              : "Present"}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Editable fields (shown when clicked) */}
+                    {editingExperience === i && (
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          placeholder="Company"
+                          value={exp.company}
+                          onChange={(e) => {
+                            const newExperience = [...form.experience];
+                            newExperience[i].company = e.target.value;
+                            setForm({ ...form, experience: newExperience });
+                          }}
+                          className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Role"
+                          value={exp.role}
+                          onChange={(e) => {
+                            const newExperience = [...form.experience];
+                            newExperience[i].role = e.target.value;
+                            setForm({ ...form, experience: newExperience });
+                          }}
+                          className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="date"
+                          placeholder="Start Date"
+                          value={exp.startDate}
+                          onChange={(e) => {
+                            const newExperience = [...form.experience];
+                            newExperience[i] = { ...newExperience[i], startDate: e.target.value };
+                            setForm({ ...form, experience: newExperience });
+                          }}
+                          className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <input
+                          type="date"
+                          placeholder="End Date"
+                          value={exp.endDate}
+                          onChange={(e) => {
+                            const newExperience = [...form.experience];
+                            newExperience[i] = { ...newExperience[i], endDate: e.target.value };
+                            setForm({ ...form, experience: newExperience });
+                          }}
+                          className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        </div>
+                        <textarea
+                          rows={2}
+                          placeholder="Description"
+                          value={exp.description}
+                          onChange={(e) => {
+                            const newExperience = [...form.experience];
+                            newExperience[i].description = e.target.value;
+                            setForm({ ...form, experience: newExperience });
+                          }}
+                          className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const newExperience = form.experience.filter(
+                        (_: any, index: number) => index !== i
+                      );
+                      setForm({ ...form, experience: newExperience });
+                      setEditingExperience(null);
+                    }}
+                    className="ml-2 text-red-500 hover:text-red-700 transition-colors text-sm"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Save */}
+      <div className="flex justify-end">
         <button
-          onClick={handleSave}
-          className="bg-green-600 text-white px-6 py-2 rounded-lg cursor-pointer hover:bg-green-700 transition"
+          onClick={handleSubmit}
+          className="bg-green-600 text-white px-6 py-2 rounded cursor-pointer hover:bg-green-700 transition-shadow shadow-md"
         >
           Save Profile
         </button>
       </div>
-
-      {/* ================= BASIC INFO ================= */}
-      <div className="bg-white shadow rounded-lg p-6 space-y-3">
-        <h2 className="font-semibold">Basic Information</h2>
-        <input
-          name="phone"
-          placeholder="Phone"
-          value={form.phone || ""}
-          onChange={handleChange}
-          className="input w-full cursor-text"
-        />
-        <input
-          name="location"
-          placeholder="Location"
-          value={form.location || ""}
-          onChange={handleChange}
-          className="input w-full cursor-text"
-        />
-      </div>
-
-      {/* resume */}
-
-      <div className="mt-6">
-        <label className="block text-sm font-medium mb-2">
-          Resume (PDF only)
-        </label>
-
-        {form.resume &&
-          typeof form.resume === "object" &&
-          "url" in form.resume && (
-            <div className="mb-3 flex items-center gap-3">
-              <a
-                href={form.resume.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 underline"
-              >
-                View Resume
-              </a>
-
-              <span className="text-xs text-gray-500">
-                Uploaded on{" "}
-                {new Date(form.resume.uploadedAt).toLocaleDateString()}
-              </span>
-            </div>
-          )}
-
-        <input
-          type="file"
-          accept=".pdf"
-          onChange={(e) =>
-            setForm((prev) => ({
-              ...prev,
-              resume: e.target.files?.[0] || null,
-            }))
-          }
-          className="block w-full text-sm"
-        />
-      </div>
-
-      {/* ================= PROFESSIONAL ================= */}
-      <div className="bg-white shadow rounded-lg p-6 space-y-3">
-        <h2 className="font-semibold">Professional Details</h2>
-        <input
-          name="title"
-          placeholder="Job Title"
-          value={form.title || ""}
-          onChange={handleChange}
-          className="input w-full cursor-text"
-        />
-        <select
-          name="experienceLevel"
-          value={form.experienceLevel || ""}
-          onChange={handleChange}
-          className="input w-full cursor-text"
-        >
-          <option value="">Experience Level</option>
-          <option value="Fresher">Fresher</option>
-          <option value="1-3">1–3 years</option>
-          <option value="3-5">3–5 years</option>
-          <option value="5+">5+ years</option>
-        </select>
-        <textarea
-          name="summary"
-          placeholder="Professional Summary"
-          value={form.summary || ""}
-          onChange={handleChange}
-          className="input w-full h-28 cursor-text"
-        />
-      </div>
-
-      {/* ================= SKILLS ================= */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="font-semibold mb-4">Skills</h2>
-        <div className="flex flex-wrap gap-2">
-          {skills.map((skill: any) => {
-            const selected = form.skills?.includes(skill._id);
-            return (
-              <button
-                key={skill._id}
-                onClick={() => toggleSkill(skill._id)}
-                className={`px-3 py-1 rounded-full text-sm border cursor-pointer ${
-                  selected
-                    ? "bg-green-600 text-white border-green-600"
-                    : "bg-gray-100 text-gray-700"
-                }`}
-              >
-                {skill.name}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ================= EDUCATION ================= */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="font-semibold mb-4">Education</h2>
-        {form.education?.map((edu: any, index: number) => (
-          <div key={index} className="flex items-center gap-2 mb-3">
-            <input
-              placeholder="Degree"
-              value={edu.degree || ""}
-              onChange={(e) => updateEducation(index, "degree", e.target.value)}
-              className="input cursor-text flex-1"
-            />
-            <input
-              placeholder="Institution"
-              value={edu.institution || ""}
-              onChange={(e) =>
-                updateEducation(index, "institution", e.target.value)
-              }
-              className="input cursor-text flex-1"
-            />
-            <input
-              placeholder="Year"
-              value={edu.year || ""}
-              onChange={(e) => updateEducation(index, "year", e.target.value)}
-              className="input cursor-text w-24"
-            />
-            <button
-              onClick={() => deleteEducation(index)}
-              className="text-red-600 cursor-pointer hover:text-red-800"
-              title="Delete Education"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        ))}
-        <button
-          onClick={addEducation}
-          className="text-green-600 text-sm cursor-pointer"
-        >
-          + Add Education
-        </button>
-      </div>
-
-      {/* ================= EXPERIENCE ================= */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="font-semibold mb-4">Experience</h2>
-        {form.experience?.map((exp: any, index: number) => (
-          <div key={index} className="space-y-2 mb-4">
-            <input
-              placeholder="Company"
-              value={exp.company || ""}
-              onChange={(e) =>
-                updateExperience(index, "company", e.target.value)
-              }
-              className="input w-full"
-            />
-            <input
-              placeholder="Role"
-              value={exp.role || ""}
-              onChange={(e) => updateExperience(index, "role", e.target.value)}
-              className="input w-full"
-            />
-            <textarea
-              placeholder="Description"
-              value={exp.description || ""}
-              onChange={(e) =>
-                updateExperience(index, "description", e.target.value)
-              }
-              className="input w-full h-20"
-            />
-          </div>
-        ))}
-        <button
-          onClick={addExperience}
-          className="text-green-600 text-sm cursor-pointer"
-        >
-          + Add Experience
-        </button>
-      </div>
-
-      {/* ================= SAVE ================= */}
-      <button
-        onClick={handleSave}
-        className="bg-green-600 text-white px-6 py-2 rounded-lg cursor-pointer hover:bg-green-700 transition"
-      >
-        Save Profile
-      </button>
     </div>
   );
 }

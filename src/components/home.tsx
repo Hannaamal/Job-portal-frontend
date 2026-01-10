@@ -17,10 +17,12 @@ export default function HomePage() {
 
   const keyword = searchParams.get("keyword") || "";
   const location = searchParams.get("location") || "";
-
+  
+  
   const { jobs, selectedJob, loading, error, page, pages } = useSelector(
     (state: RootState) => state.jobs
   );
+  const hasNoResults = !loading && jobs.length === 0;
 
   // 🔥 FETCH JOBS WHEN SEARCH CHANGES
   useEffect(() => {
@@ -33,13 +35,19 @@ export default function HomePage() {
       })
     );
   }, [dispatch, keyword, location]);
+  
+  // AUTO SELECT FIRST JOB
 
-  // 🔥 AUTO SELECT FIRST JOB
   useEffect(() => {
-    if (jobs.length > 0) {
-      dispatch(setSelectedJob(jobs[0]));
-    }
-  }, [jobs, dispatch]);
+  if (jobs.length > 0) {
+    dispatch(setSelectedJob(jobs[0]));
+  } else {
+    dispatch(setSelectedJob(null));
+  }
+}, [jobs, dispatch]);
+
+
+
 
   const handlePageChange = (_: any, value: number) => {
     dispatch(
@@ -56,25 +64,44 @@ export default function HomePage() {
   if (error) return <div className="p-6 text-red-500">{error}</div>;
 
   return (
-    <div className="grid grid-cols-12 gap-6 p-6">
-      <div className="col-span-4 space-y-4">
-        {jobs.map((job) => (
-          <JobCard
-            key={job._id}
-            job={job}
-            active={job._id === selectedJob?._id}
-            onSelect={() => dispatch(setSelectedJob(job))}
-          />
-        ))}
+     <div className="grid grid-cols-12 gap-6 p-6">
+      {/* LEFT COLUMN */}
+      <div className="col-span-4 flex flex-col min-h-[calc(100vh-100px)]">
+        {/* Job list */}
+        <div className="flex-1 space-y-4">
+          {hasNoResults && (
+            <div className="bg-white border rounded-lg p-6 text-center text-gray-500">
+              <p className="font-medium text-lg">No jobs found</p>
+              <p className="text-sm mt-1">
+                Try changing keyword or location
+              </p>
+            </div>
+          )}
 
-        <Pagination
-          count={pages}
-          page={page}
-          onChange={handlePageChange}
-          color="primary"
-        />
+          {jobs.map((job) => (
+            <JobCard
+              key={job._id}
+              job={job}
+              active={job._id === selectedJob?._id}
+              onSelect={() => dispatch(setSelectedJob(job))}
+            />
+          ))}
+        </div>
+
+        {/* Pagination FIXED at bottom */}
+        {pages > 1 && (
+          <div className="mt-6 flex justify-center">
+            <Pagination
+              count={pages}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+            />
+          </div>
+        )}
       </div>
 
+      {/* RIGHT COLUMN */}
       <div className="col-span-8">
         <JobDetails job={selectedJob} />
       </div>

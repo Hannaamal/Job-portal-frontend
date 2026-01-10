@@ -304,13 +304,30 @@ export default function AdminCompanyPage() {
 
   return (
     <Container>
-      <Typography variant="h4" my={4}>
-        Company management
-      </Typography>
-
-      {/* Add Company Button */}
-      <Box mb={2}>
-        <Button variant="contained" onClick={() => setOpenAddDrawer(true)}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        my={4}
+      >
+        <Typography variant="h4">Company Management</Typography>
+        <Button
+          variant="contained"
+          onClick={() => setOpenAddDrawer(true)}
+          sx={{
+            textTransform: "none", // Keep text normal, not uppercase
+            borderRadius: 2, // Rounded corners
+            px: 4,
+            py: 1.5, // Bigger padding
+            fontWeight: 600, // Bold text
+            background: "linear-gradient(90deg, #3b82f6, #60a5fa)", // Blue gradient
+            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+            "&:hover": {
+              background: "linear-gradient(90deg, #2563eb, #3b82f6)", // Darker gradient on hover
+              boxShadow: "0 6px 10px rgba(0,0,0,0.15)",
+            },
+          }}
+        >
           Add Company
         </Button>
       </Box>
@@ -453,7 +470,7 @@ export default function AdminCompanyPage() {
               }
               InputProps={{ sx: { borderRadius: 2 } }}
             />
-             <TextField
+            <TextField
               fullWidth
               label="Description"
               variant="outlined"

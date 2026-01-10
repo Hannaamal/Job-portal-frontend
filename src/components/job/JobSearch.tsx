@@ -1,13 +1,24 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { useState } from "react";
 
-export default function JobSearchBar() {
+interface SearchBarProps {
+  keyword: string;
+  location: string;
+  onKeywordChange: React.Dispatch<React.SetStateAction<string>>;
+  onLocationChange: React.Dispatch<React.SetStateAction<string>>;
+  onSearch: () => void;
+}
+
+export default function JobSearchBar({
+  keyword,
+  location,
+  onKeywordChange,
+  onLocationChange,
+  onSearch,
+}: SearchBarProps) {
   const router = useRouter();
-  const pathname = usePathname(); // 👈 current page (home)
-  const [keyword, setKeyword] = useState("");
-  const [location, setLocation] = useState("");
+  const pathname = usePathname();
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -15,15 +26,15 @@ export default function JobSearchBar() {
     if (keyword.trim()) params.set("keyword", keyword.trim());
     if (location.trim()) params.set("location", location.trim());
 
-    // 👇 STAY on same page (HOME)
     router.push(`${pathname}?${params.toString()}`);
+    onSearch(); // optional if parent needs it
   };
 
   return (
     <div className="bg-white shadow-lg rounded-full px-6 py-3 flex items-center gap-4 max-w-5xl mx-auto">
       <input
         value={keyword}
-        onChange={(e) => setKeyword(e.target.value)}
+        onChange={(e) => onKeywordChange(e.target.value)}
         placeholder="Job title, skills, or category"
         className="flex-1 outline-none"
       />
@@ -32,7 +43,7 @@ export default function JobSearchBar() {
 
       <input
         value={location}
-        onChange={(e) => setLocation(e.target.value)}
+        onChange={(e) => onLocationChange(e.target.value)}
         placeholder="Location"
         className="w-48 outline-none"
       />

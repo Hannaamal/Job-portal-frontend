@@ -11,7 +11,6 @@ import * as Yup from "yup";
     .required("Email is required"),
 
   website: Yup.string()
-    .url("Invalid website URL")
     .required("Website is required"),
 
   location: Yup.string()

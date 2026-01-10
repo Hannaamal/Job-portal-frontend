@@ -8,6 +8,7 @@ import {
 } from "@/redux/jobs/myApplicationsSlice";
 import { RootState, AppDispatch } from "@/redux/store";
 import { useRouter } from "next/navigation";
+import ConfirmModal from "../common/Conformation";
 
 export default function MyApplicationsPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -15,6 +16,8 @@ export default function MyApplicationsPage() {
   const { myApplications, loading, error } = useSelector(
     (state: RootState) => state.myApplications
   );
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<"applied" | "interviews">(
     "applied"
@@ -33,10 +36,17 @@ export default function MyApplicationsPage() {
   );
 
   const router = useRouter();
-  const handleWithdraw = (jobId: string) => {
-    if (confirm("Withdraw this application?")) {
-      dispatch(withdrawApplication(jobId));
+  const handleWithdrawClick = (jobId: string) => {
+    setSelectedJobId(jobId);
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmWithdraw = () => {
+    if (selectedJobId) {
+      dispatch(withdrawApplication(selectedJobId));
     }
+    setConfirmOpen(false);
+    setSelectedJobId(null);
   };
 
   if (loading) return <p className="p-6 text-gray-500">Loading...</p>;
@@ -102,8 +112,8 @@ export default function MyApplicationsPage() {
               {/* Withdraw Button */}
               <button
                 onClick={(e) => {
-                  e.stopPropagation(); // prevent card click
-                  handleWithdraw(app.job._id);
+                  e.stopPropagation();
+                  handleWithdrawClick(app.job._id);
                 }}
                 className="mt-5 text-sm border border-gray-300 px-4 py-2 rounded-lg hover:border-red-500 hover:text-red-600 transition"
               >
@@ -111,6 +121,15 @@ export default function MyApplicationsPage() {
               </button>
             </div>
           ))}
+          <ConfirmModal
+            open={confirmOpen}
+            title="Withdraw application?"
+            description="Are you sure you want to withdraw this application? This action cannot be undone."
+            confirmText="Withdraw"
+            cancelText="Cancel"
+            onConfirm={handleConfirmWithdraw}
+            onCancel={() => setConfirmOpen(false)}
+          />
         </div>
       )}
 
@@ -168,13 +187,9 @@ function InterviewCard({ app }: any) {
 
   return (
     <div className="border border-gray-200 rounded-xl p-5 bg-white">
-      <h3 className="font-medium text-gray-900">
-        {app.job?.title}
-      </h3>
+      <h3 className="font-medium text-gray-900">{app.job?.title}</h3>
 
-      <p className="text-sm text-gray-500 mb-3">
-        {app.company?.name}
-      </p>
+      <p className="text-sm text-gray-500 mb-3">{app.company?.name}</p>
 
       <div className="text-sm text-gray-600 space-y-1">
         <p>📅 {new Date(interview.date).toLocaleDateString()}</p>
@@ -186,7 +201,9 @@ function InterviewCard({ app }: any) {
         )}
 
         <p>
-          {interview.medium === "Online" ? "💻 Online interview" : "🏢 Onsite interview"}
+          {interview.medium === "Online"
+            ? "💻 Online interview"
+            : "🏢 Onsite interview"}
         </p>
 
         {interview.location && <p>📍 {interview.location}</p>}

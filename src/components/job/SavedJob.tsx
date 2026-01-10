@@ -38,20 +38,24 @@ export default function SavedJobsPage() {
   const currentJobs = savedJobs.slice(startIdx, startIdx + ITEMS_PER_PAGE);
 
   return (
-    <div className="min-h-screen flex flex-col px-6 py-8 bg-gray-50">
+  <div className="min-h-screen px-6 py-8 bg-gray-50 grid grid-rows-[auto_1fr_auto]">
+
       {/* Page Title */}
       <h1 className="text-2xl font-bold mb-6 text-gray-800">Saved Jobs</h1>
 
       {/* Jobs Grid */}
-      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+
         {currentJobs.map((item) => (
           <div
             key={item.job._id}
             onClick={() => router.push(`/job/${item.job._id}`)}
-            className="cursor-pointer bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition p-5 flex flex-col justify-between h-full"
-          >
+            className="cursor-pointer bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition p-5 flex flex-col justify-between w-full h-[260px]"
+
+           >
             {/* Job Info */}
-            <div className="flex-1">
+            <div>
               <h3 className="font-semibold text-lg text-gray-900 mb-1">
                 {item.job.title}
               </h3>

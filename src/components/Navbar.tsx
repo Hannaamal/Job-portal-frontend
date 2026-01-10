@@ -20,6 +20,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store";
 import { fetchNotifications } from "@/redux/notificationSlice";
 import { fetchSavedJobs } from "@/redux/jobs/saveJobSlice";
+import { fetchMyProfile } from "@/redux/profileSlice";
 import { BookmarkIcon } from "lucide-react";
 import { useAuth } from "@/Context/AuthContext";
 import { logoutUser } from "@/redux/authSlice";
@@ -38,6 +39,7 @@ export default function Navbar() {
   const savedJobs = useSelector(
     (state: RootState) => state.savedJobs.savedJobs
   );
+  const profile = useSelector((state: RootState) => state.profile.profile);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
   const savedCount = savedJobs.length;
@@ -45,11 +47,12 @@ export default function Navbar() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
-  // Fetch notifications & saved jobs only when logged in
+  // Fetch notifications, saved jobs, and profile only when logged in
   useEffect(() => {
     if (isAuthenticated) {
       dispatch(fetchNotifications());
       dispatch(fetchSavedJobs());
+      dispatch(fetchMyProfile());
     }
   }, [dispatch, isAuthenticated]);
 
@@ -86,6 +89,20 @@ export default function Navbar() {
   // ✅ Helper for menu items
   const getMenuItemClass = (link: string) =>
     pathname === link ? "font-semibold text-blue-600" : "";
+
+  // Get avatar URL for profile icon
+  const getAvatarUrl = () => {
+    if (profile?.avatar) {
+      // If avatar is a relative path, prepend the backend URL
+      if (!profile.avatar.startsWith('http')) {
+        return `${process.env.NEXT_PUBLIC_BACKEND_URL}${profile.avatar}`;
+      }
+      return profile.avatar;
+    }
+    return null;
+  };
+
+  const avatarUrl = getAvatarUrl();
 
   return (
     <nav className="flex items-center justify-between px-8 py-4 bg-white shadow-sm">
@@ -159,7 +176,15 @@ export default function Navbar() {
 
             {/* Profile */}
             <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-              <AccountCircleIcon fontSize="large" />
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="Profile"
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              ) : (
+                <AccountCircleIcon fontSize="large" />
+              )}
             </IconButton>
           </>
         )}
@@ -174,21 +199,36 @@ export default function Navbar() {
           anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
           transformOrigin={{ vertical: "top", horizontal: "right" }}
         >
-          <MenuItem component={Link} href="/profile">
+          <MenuItem 
+            onClick={() => {
+              handleCloseMenu();
+              router.push("/profile");
+            }}
+          >
             <ListItemIcon>
               <AccountBoxIcon fontSize="small" />
             </ListItemIcon>
             Profile
           </MenuItem>
 
-          <MenuItem component={Link} href="/companies/my-subscriptions">
+          <MenuItem 
+            onClick={() => {
+              handleCloseMenu();
+              router.push("/companies/my-subscriptions");
+            }}
+          >
             <ListItemIcon>
               <SubscriptionsIcon fontSize="small" />
             </ListItemIcon>
             My Subscriptions
           </MenuItem>
 
-          <MenuItem component={Link} href="/my-application">
+          <MenuItem 
+            onClick={() => {
+              handleCloseMenu();
+              router.push("/my-application");
+            }}
+          >
             <ListItemIcon>
               <WorkIcon fontSize="small" />
             </ListItemIcon>

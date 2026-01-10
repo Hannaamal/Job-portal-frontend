@@ -15,8 +15,11 @@ import ConfirmModal from "../common/Conformation";
 
 export default function AdminInterviewPage() {
   const dispatch = useDispatch<AppDispatch>();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6; // jobs per page
 
   const { jobs, loading } = useSelector((state: RootState) => state.adminJobs);
+
   const { interviews } = useSelector(
     (state: RootState) => state.adminInterviews
   );
@@ -24,29 +27,79 @@ export default function AdminInterviewPage() {
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
-
+  const [searchTerm, setSearchTerm] = useState(""); // For job title search
+  const [companyFilter, setCompanyFilter] = useState(""); // For company name filter
+  
   useEffect(() => {
-    dispatch(fetchAdminJobs());
-  }, [dispatch]);
+      dispatch(fetchAdminJobs());
+    }, [dispatch]);
 
-  useEffect(() => {
-    jobs.forEach((job) => {
-      dispatch(getJobInterviewsThunk({ jobId: job._id }));
-    });
+    useEffect(() => {
+        jobs.forEach((job) => {
+            console.log("Jobs from Redux:", jobs);
+            dispatch(getJobInterviewsThunk({ jobId: job._id }));
+        });
   }, [dispatch, jobs]);
 
   const getInterviewForJob = (jobId: string) => {
     return interviews.find((i) =>
       typeof i.job === "string" ? i.job === jobId : i.job._id === jobId
     );
-  };
+};
+
+const filteredJobs = jobs.filter((job) => {
+    const matchesTitle = job.title
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+
+    const matchesCompany = companyFilter
+      ? job.company?.name.toLowerCase().includes(companyFilter.toLowerCase())
+      : true; // if no filter, show all
+
+    return matchesTitle && matchesCompany;
+  });
+  
+  const indexOfLastJob = currentPage * itemsPerPage;
+  const indexOfFirstJob = indexOfLastJob - itemsPerPage;
+  const currentJobs = filteredJobs.slice(indexOfFirstJob, indexOfLastJob);
+  const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
+  
+  const companyOptions = Array.from(
+    new Set(
+      jobs
+        .map((job) => job.company?.name)
+        .filter((name): name is string => !!name) // remove null/undefined
+    )
+  );
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-semibold mb-6">Interview Scheduling</h1>
 
+     <div className="flex items-center gap-4 mb-6">
+        <input
+          type="text"
+          placeholder="Search job by title..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+        <select
+          value={companyFilter}
+          onChange={(e) => setCompanyFilter(e.target.value)}
+          className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        >
+          <option value="">All Companies</option>
+          {companyOptions.map((company) => (
+            <option key={company} value={company}>
+              {company}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {jobs.map((job) => {
+        {currentJobs.map((job) => {
           const interview = getInterviewForJob(job._id);
 
           return (
@@ -59,6 +112,9 @@ export default function AdminInterviewPage() {
               </div>
 
               <h2 className="text-lg font-semibold">{job.title}</h2>
+              <p className="text-sm text-gray-500 mt-2">
+                {job.company?.name ?? "Unknown Company"}
+              </p>
 
               <div className="flex items-center gap-1 text-sm text-gray-500 mt-2">
                 <MapPin size={14} />
@@ -96,6 +152,45 @@ export default function AdminInterviewPage() {
           );
         })}
       </div>
+      {filteredJobs.length === 0 && !loading && (
+        <p className="col-span-full text-center text-gray-500 mt-6">
+          No jobs found.
+        </p>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-6 gap-2">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            Previous
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <button
+              key={page}
+              onClick={() => setCurrentPage(page)}
+              className={`px-3 py-1 border rounded ${
+                currentPage === page ? "bg-blue-600 text-white" : ""
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {/* MODAL */}
       {selectedJobId && (

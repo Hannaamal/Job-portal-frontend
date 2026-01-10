@@ -1,6 +1,6 @@
 
 import ProfilePage from "@/components/ProfilePage";
 
-export default function MyApplications() {
+export default function profile() {
   return <ProfilePage/>;
 }

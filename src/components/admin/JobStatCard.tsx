@@ -1,17 +1,31 @@
-export default function JobStatsChart({ data }: any) {
+"use client";
+
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+
+interface JobStatsChartProps {
+  data: number[];
+}
+
+export default function JobStatsChart({ data }: JobStatsChartProps) {
+  // Convert the array into objects for the chart
+  const chartData = data.map((value, index) => ({
+    name: `Day ${index + 1}`,
+    value,
+  }));
+
   return (
     <div className="bg-white rounded-xl p-6 shadow">
       <h3 className="font-semibold mb-4">Job Stats</h3>
 
-      <div className="grid grid-cols-7 gap-4 items-end h-40">
-        {data.map((h: number, i: number) => (
-          <div
-            key={i}
-            className="bg-blue-500 rounded-md"
-            style={{ height: `${h}px` }}
-          />
-        ))}
-      </div>
+      <ResponsiveContainer width="100%" height={200}>
+        <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+          <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip />
+          <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
   );
 }

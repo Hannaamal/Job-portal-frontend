@@ -7,6 +7,7 @@ export interface AdminJob {
   location: string;
   jobType: string;
   experienceLevel: string;
+  company: { _id: string; name: string } | null; // ✅ must be present
   isActive: boolean;
   createdAt: string;
 }
@@ -146,4 +147,5 @@ const adminJobsSlice = createSlice({
 });
 
 export const { resetAdminJobsState } = adminJobsSlice.actions;
+
 export default adminJobsSlice.reducer;

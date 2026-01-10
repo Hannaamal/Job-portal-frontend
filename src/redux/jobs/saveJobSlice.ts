@@ -14,39 +14,58 @@ const initialState: SavedJobsState = {
   error: null,
 };
 
-
-
-
-
 // Fetch saved jobs
-export const fetchSavedJobs = createAsyncThunk("savedJobs/fetchSavedJobs", async (_, { rejectWithValue }) => {
-  try {
-    const res = await api.get("/api/savejob/saved", { withCredentials: true });
-    return res.data;
-  } catch (err: any) {
-    return rejectWithValue(err.response?.data?.message || "Failed to fetch saved jobs");
+export const fetchSavedJobs = createAsyncThunk(
+  "savedJobs/fetchSavedJobs",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await api.get("/api/savejob/saved", {
+        withCredentials: true,
+      });
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch saved jobs"
+      );
+    }
   }
-});
+);
 
 // Save a job
-export const saveJob = createAsyncThunk("savedJobs/saveJob", async (jobId: string, { rejectWithValue }) => {
-  try {
-    const res = await api.post(`/api/savejob/${jobId}/save`, {}, { withCredentials: true });
-    return res.data;
-  } catch (err: any) {
-    return rejectWithValue(err.response?.data?.message || "Failed to save job");
+export const saveJob = createAsyncThunk(
+  "savedJobs/saveJob",
+  async (jobId: string, { rejectWithValue }) => {
+    try {
+      const res = await api.post(
+        `/api/savejob/${jobId}/save`,
+        {},
+        { withCredentials: true }
+      );
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to save job"
+      );
+    }
   }
-});
+);
 
 // Remove saved job
-export const removeSavedJob = createAsyncThunk("savedJobs/removeSavedJob", async (jobId: string, { rejectWithValue }) => {
-  try {
-    const res = await api.delete(`/api/savejob/${jobId}/remove`, { withCredentials: true });
-    return jobId;
-  } catch (err: any) {
-    return rejectWithValue(err.response?.data?.message || "Failed to remove saved job");
+export const removeSavedJob = createAsyncThunk(
+  "savedJobs/removeSavedJob",
+  async (jobId: string, { rejectWithValue }) => {
+    try {
+      const res = await api.delete(`/api/savejob/${jobId}/remove`, {
+        withCredentials: true,
+      });
+      return jobId;
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to remove saved job"
+      );
+    }
   }
-});
+);
 
 const savedJobsSlice = createSlice({
   name: "savedJobs",
@@ -67,10 +86,22 @@ const savedJobsSlice = createSlice({
         state.error = action.payload as string;
       })
       .addCase(saveJob.fulfilled, (state, action) => {
-        state.savedJobs.unshift(action.payload);
+        const jobId = action.meta.arg; // 👈 jobId passed to thunk
+
+        const exists = state.savedJobs.some((item) => item.job._id === jobId);
+
+        if (!exists) {
+          state.savedJobs.unshift({
+            job: { _id: jobId },
+            createdAt: new Date().toISOString(),
+          });
+        }
       })
+
       .addCase(removeSavedJob.fulfilled, (state, action) => {
-        state.savedJobs = state.savedJobs.filter((job) => job.job._id !== action.payload);
+        state.savedJobs = state.savedJobs.filter(
+          (job) => job.job._id !== action.payload
+        );
       });
   },
 });

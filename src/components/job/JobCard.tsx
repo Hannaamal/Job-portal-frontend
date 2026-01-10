@@ -1,12 +1,33 @@
 "use client";
 
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
-import { Job } from "@/types/job";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/redux/store";
 import { saveJob, removeSavedJob, fetchSavedJobs } from "@/redux/jobs/saveJobSlice";
 import { useEffect } from "react";
 import { BookmarkIcon } from "lucide-react";
+
+
+interface Job {
+  _id: string;
+  title: string;
+  description: string;
+  location: string;
+ jobType?: string;          // ✅ FIX
+  experienceLevel?: string;  // ✅ FIX
+  salaryRange?: {
+    min: number;
+    max: number;
+  };
+  company: {
+    _id: string;
+    name: string;
+  };
+  requiredSkills?: {   // ✅ FIX
+    _id: string;
+    name: string;
+  }[];
+}
 
 
 interface Props {

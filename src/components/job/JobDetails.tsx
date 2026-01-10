@@ -21,6 +21,7 @@ export default function JobDetails({ job }: JobDetailsProps) {
   const dispatch = useDispatch<AppDispatch>();
   const savedJobs = useSelector((state: RootState) => state.savedJobs.savedJobs);
 
+
   const isSaved = job ? savedJobs.some((s) => s.job._id === job._id) : false;
 
   useEffect(() => {

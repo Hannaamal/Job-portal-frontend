@@ -12,12 +12,15 @@ function ApplicationRow({ title, received, hold, rejected }: any) {
 }
 
 export default function ApplicationsCard({ data }: any) {
+  // Show only latest 6 applications
+  const latestData = data.slice(-6).reverse(); // reverse so newest comes first
+
   return (
     <div className="bg-white rounded-xl p-6 shadow">
       <h3 className="font-semibold mb-4">Applications</h3>
 
       <div className="space-y-4">
-        {data.map((item: any, i: number) => (
+        {latestData.map((item: any, i: number) => (
           <ApplicationRow key={i} {...item} />
         ))}
       </div>

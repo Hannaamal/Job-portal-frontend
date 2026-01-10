@@ -42,10 +42,7 @@ export default function JobSearchSection() {
         onSearch={handleSearch}
       />
 
-      <JobFilterBar
-        filters={filters}
-        onRemove={removeFilter}
-      />
+      <JobFilterBar/>
     </div>
   );
 }
