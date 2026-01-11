@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "@/lib/api";
 import { RootState } from "./store";
+import api from "@/lib/api";
 
 export interface Skill {
   _id: string;
@@ -53,7 +53,7 @@ export const fetchMyProfile = createAsyncThunk(
   "profile/fetchMyProfile",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axios.get("/api/profile/me");
+      const res = await api.get("/api/profile/me");
       return res.data; // return { user, profile }!
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message);
@@ -66,12 +66,33 @@ export const updateMyProfile = createAsyncThunk(
   "profile/updateMyProfile",
   async (formData: FormData, { rejectWithValue }) => {
     try {
-      const res = await axios.put("/api/profile/me/update", formData, {
+      console.log("Sending update request with FormData:");
+      // Log FormData contents for debugging
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
+      
+      const res = await api.put("/api/profile/me/update", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+
+      console.log("Update successful:", res.data);
       return res.data; // backend returns { user, profile }
-    } catch (err: any) {
-      return rejectWithValue(err.response?.data?.message);
+    } catch (err: unknown) {
+      console.error("Update failed:", err);
+      const error = err as { response?: { data?: { message?: string; errors?: any } } };
+      const errorMessage = error.response?.data?.message || "Failed to update profile";
+      const validationErrors = error.response?.data?.errors;
+      
+      if (validationErrors) {
+        console.error("Validation errors:", validationErrors);
+        // Log each validation error
+        Object.keys(validationErrors).forEach(key => {
+          console.error(`${key}:`, validationErrors[key]);
+        });
+      }
+      
+      return rejectWithValue({ message: errorMessage, errors: validationErrors });
     }
   }
 );
@@ -81,7 +102,7 @@ export const fetchSkills = createAsyncThunk(
   "profile/fetchSkills",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await axios.get("/api/skills/");
+      const res = await api.get("/api/skills/");
       return res.data;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message);
@@ -114,7 +135,9 @@ const profileSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Fetch
-      .addCase(fetchMyProfile.pending, (state) => { state.loading = true; })
+      .addCase(fetchMyProfile.pending, (state) => { 
+        state.loading = true; 
+      })
       .addCase(fetchMyProfile.fulfilled, (state, action) => {
         state.loading = false;
         const { user, profile } = action.payload;
@@ -136,7 +159,9 @@ const profileSlice = createSlice({
       })
 
       // Update
-      .addCase(updateMyProfile.pending, (state) => { state.loading = true; })
+      .addCase(updateMyProfile.pending, (state) => { 
+        state.loading = true; 
+      })
       .addCase(updateMyProfile.fulfilled, (state, action) => {
         state.loading = false;
         const { user, profile } = action.payload;

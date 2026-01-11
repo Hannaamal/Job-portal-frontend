@@ -33,6 +33,8 @@ export default function ProfilePage() {
     avatar: "",
     resume: null,
   });
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [editingEducation, setEditingEducation] = useState<number | null>(null);
   const [editingExperience, setEditingExperience] = useState<number | null>(
     null
@@ -85,33 +87,90 @@ export default function ProfilePage() {
   };
 
   const avatarPreview = useMemo(() => {
+    // If we have a new file selected, use that
     if (form.avatar instanceof File) {
       return URL.createObjectURL(form.avatar);
     }
-    // If avatar is a relative path, prepend the backend URL
-    if (form.avatar && !form.avatar.startsWith('http')) {
-      return `${process.env.NEXT_PUBLIC_BACKEND_URL}${form.avatar}`;
-    }
-    return form.avatar || "/default-avatar.png";
-  }, [form.avatar]);
-
-  const handleSubmit = () => {
-    const fd = new FormData();
-    Object.entries(form).forEach(([key, value]: any) => {
-      if (value === null || value === undefined) return;
-      if (["skills", "education", "experience"].includes(key)) {
-        fd.append(key, JSON.stringify(value));
-      } else if (value instanceof File) {
-        fd.append(key, value);
-      } else if (key === "resume" && value && typeof value === "object" && value.url) {
-        // If resume is an object with url (existing resume), don't send it
-        // The backend should handle existing resumes separately
-        return;
-      } else {
-        fd.append(key, value);
+    // If we have an existing avatar from profile, use that
+    if (profile?.avatar) {
+      // If it's already a full URL, use it directly
+      if (profile.avatar.startsWith('http')) {
+        return profile.avatar;
       }
-    });
-    dispatch(updateMyProfile(fd));
+      // If it's a relative path, prepend the backend URL
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+      return `${backendUrl}${profile.avatar}`;
+    }
+    // Fallback to form.avatar if it exists and is a URL
+    if (form.avatar && form.avatar !== "") {
+      // If it's already a full URL, use it directly
+      if (form.avatar.startsWith('http')) {
+        return form.avatar;
+      }
+      // If it's a relative path, prepend the backend URL
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+      return `${backendUrl}${form.avatar}`;
+    }
+    return "/default-avatar.png";
+  }, [form.avatar, profile?.avatar]);
+
+  const handleSubmit = async () => {
+    setUploading(true);
+    setUploadError(null);
+    
+    const fd = new FormData();
+    
+    // Handle basic fields (only if they have actual values)
+    if (form.phone && form.phone.trim()) fd.append("phone", form.phone.trim());
+    if (form.location && form.location.trim()) fd.append("location", form.location.trim());
+    if (form.title && form.title.trim()) fd.append("title", form.title.trim());
+    if (form.experienceLevel && form.experienceLevel.trim()) fd.append("experienceLevel", form.experienceLevel.trim());
+    if (form.summary && form.summary.trim()) fd.append("summary", form.summary.trim());
+    
+    // Handle skills (only if there are skills)
+    if (Array.isArray(form.skills) && form.skills.length > 0) {
+      fd.append("skills", JSON.stringify(form.skills));
+    }
+    
+    // Handle education (only if there is education)
+    if (Array.isArray(form.education) && form.education.length > 0) {
+      fd.append("education", JSON.stringify(form.education));
+    }
+    
+    // Handle experience (only if there is experience)
+    if (Array.isArray(form.experience) && form.experience.length > 0) {
+      fd.append("experience", JSON.stringify(form.experience));
+    }
+    
+    // Handle avatar (only if it's a new file)
+    if (form.avatar instanceof File) {
+      fd.append("avatar", form.avatar);
+    }
+    
+    // Handle resume (only if it's a new file)
+    if (form.resume instanceof File) {
+      fd.append("resume", form.resume);
+    }
+    
+    console.log("FormData entries:");
+    for (let [key, value] of fd.entries()) {
+      console.log(key, value);
+    }
+    
+    try {
+      const result = await dispatch(updateMyProfile(fd)).unwrap();
+      console.log("Profile updated successfully:", result);
+      // Reset form avatar to the updated profile avatar
+      setForm((prev: any) => ({
+        ...prev,
+        avatar: result.profile?.avatar || ""
+      }));
+    } catch (error: any) {
+      console.error("Profile update failed:", error);
+      setUploadError(error.message || "Failed to update profile. Please try again.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   /* ================= UI ================= */
@@ -133,13 +192,16 @@ export default function ProfilePage() {
                 type="file"
                 accept="image/*"
                 className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                onChange={(e) =>
-                  setForm({ ...form, avatar: e.target.files?.[0] })
-                }
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setForm({ ...form, avatar: file });
+                  }
+                }}
               />
               <div className="absolute inset-0 rounded-full bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-0">
                 <span className="text-white text-xs font-medium">
-                  {form.avatar ? "Change" : "+"}
+                  {form.avatar instanceof File ? "Change" : "Change"}
                 </span>
               </div>
             </div>
@@ -348,7 +410,7 @@ export default function ProfilePage() {
         <h2 className="font-semibold mb-4">Skills</h2>
 
         {/* Selected skills (top pills) */}
-        {form.skills.length > 0 && (
+        {Array.isArray(form.skills) && form.skills.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
             {skills
               .filter((s: any) => form.skills.includes(s._id))
@@ -366,12 +428,12 @@ export default function ProfilePage() {
         )}
 
         {/* All skills */}
-        {skills.length === 0 ? (
+        {Array.isArray(skills) && skills.length === 0 ? (
           <p className="text-sm text-gray-500">Loading skills...</p>
         ) : (
           <div className="flex flex-wrap gap-2">
-            {skills.map((skill: any) => {
-              const selected = form.skills.includes(String(skill._id));
+            {Array.isArray(skills) && skills.map((skill: any) => {
+              const selected = Array.isArray(form.skills) && form.skills.includes(String(skill._id));
               return (
                 <button
                   key={skill._id}
@@ -684,11 +746,29 @@ export default function ProfilePage() {
       <div className="flex justify-end">
         <button
           onClick={handleSubmit}
-          className="bg-green-600 text-white px-6 py-2 rounded cursor-pointer hover:bg-green-700 transition-shadow shadow-md"
+          disabled={uploading}
+          className={`px-6 py-2 rounded cursor-pointer transition-shadow shadow-md ${
+            uploading 
+              ? "bg-gray-400 cursor-not-allowed" 
+              : "bg-green-600 text-white hover:bg-green-700"
+          }`}
         >
-          Save Profile
+          {uploading ? "Saving..." : "Save Profile"}
         </button>
       </div>
+
+      {/* Error Message */}
+      {uploadError && (
+        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-600 text-sm">{uploadError}</p>
+          <button
+            onClick={() => setUploadError(null)}
+            className="mt-2 text-red-500 hover:text-red-700 text-sm"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
     </div>
   );
 }

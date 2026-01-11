@@ -21,7 +21,10 @@ import {
   Card,
   CardContent,
   Stack,
+  Avatar,
+  Grid,
 } from "@mui/material";
+import Image from "next/image";
 
 export default function AdminUsersPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -86,13 +89,29 @@ export default function AdminUsersPage() {
                     alignItems: "center",
                   }}
                 >
-                  <Box>
-                    <Typography variant="subtitle1" fontWeight={600}>
-                      {user.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {user.email}
-                    </Typography>
+                  <Box display="flex" alignItems="center" gap={2}>
+                    {/* Profile Image */}
+                    <Avatar
+                      src={user.profile?.avatar ? 
+                        (user.profile.avatar.startsWith('http') 
+                          ? user.profile.avatar 
+                          : `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}${user.profile.avatar}`)
+                        : undefined}
+                      alt={user.name}
+                      sx={{ width: 50, height: 50 }}
+                    >
+                      {user.name.charAt(0).toUpperCase()}
+                    </Avatar>
+                    
+                    {/* User Info */}
+                    <Box>
+                      <Typography variant="subtitle1" fontWeight={600}>
+                        {user.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {user.email}
+                      </Typography>
+                    </Box>
                   </Box>
 
                   <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
@@ -133,28 +152,114 @@ export default function AdminUsersPage() {
         <DialogContent>
           {selectedUser ? (
             <Stack spacing={2} mt={1}>
-              <Typography>
-                <b>Name:</b> {selectedUser.user.name}
-              </Typography>
-              <Typography>
-                <b>Email:</b> {selectedUser.user.email}
-              </Typography>
-              <Typography>
-                <b>Role:</b> {selectedUser.user.role}
-              </Typography>
+              {/* Profile Header with Image */}
+              <Box display="flex" alignItems="center" gap={2}>
+                <Avatar
+                  src={selectedUser.profile?.avatar ? 
+                    (selectedUser.profile.avatar.startsWith('http') 
+                      ? selectedUser.profile.avatar 
+                      : `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"}${selectedUser.profile.avatar}`)
+                    : undefined}
+                  alt={selectedUser.user.name}
+                  sx={{ width: 80, height: 80 }}
+                >
+                  {selectedUser.user.name.charAt(0).toUpperCase()}
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" fontWeight={600}>
+                    {selectedUser.user.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {selectedUser.user.email}
+                  </Typography>
+                  <Typography variant="body2">
+                    <b>Role:</b> {selectedUser.user.role}
+                  </Typography>
+                </Box>
+              </Box>
 
               <Typography variant="subtitle1" mt={2}>
                 Profile Details
               </Typography>
+
               <Typography>
-                <b>Bio:</b> {selectedUser.profile?.bio || "Not added"}
+                <b>Phone:</b> {selectedUser.profile?.phone || "Not added"}
+              </Typography>
+              <Typography>
+                <b>Location:</b> {selectedUser.profile?.location || "Not added"}
+              </Typography>
+              <Typography>
+                <b>Title:</b> {selectedUser.profile?.title || "Not added"}
+              </Typography>
+              <Typography>
+                <b>Experience Level:</b> {selectedUser.profile?.experienceLevel || "Not added"}
+              </Typography>
+              <Typography>
+                <b>Summary:</b> {selectedUser.profile?.summary || "Not added"}
               </Typography>
               <Typography>
                 <b>Skills:</b>{" "}
-                {selectedUser.profile?.skills?.length
-                  ? selectedUser.profile.skills.join(", ")
+                {Array.isArray(selectedUser.profile?.skills) && selectedUser.profile.skills.length > 0
+                  ? selectedUser.profile.skills.map((skill: any) => 
+                      typeof skill === 'string' ? skill : skill.name
+                    ).join(", ")
                   : "Not added"}
               </Typography>
+
+              <Typography variant="subtitle1" mt={3}>
+                Education
+              </Typography>
+              {Array.isArray(selectedUser.profile?.education) && selectedUser.profile.education.length > 0 ? (
+                selectedUser.profile.education.map((edu: any, index: number) => (
+                  <Typography key={index} variant="body2" sx={{ ml: 2 }}>
+                    • {edu.degree} at {edu.institution} ({edu.year || "Year not specified"})
+                  </Typography>
+                ))
+              ) : (
+                <Typography variant="body2" sx={{ ml: 2 }}>
+                  No education added
+                </Typography>
+              )}
+
+              <Typography variant="subtitle1" mt={3}>
+                Experience
+              </Typography>
+              {Array.isArray(selectedUser.profile?.experience) && selectedUser.profile.experience.length > 0 ? (
+                selectedUser.profile.experience.map((exp: any, index: number) => (
+                  <Box key={index} sx={{ ml: 2, mb: 1 }}>
+                    <Typography variant="body2">
+                      • {exp.role} at {exp.company}
+                    </Typography>
+                    <Typography variant="body2" sx={{ ml: 2, color: 'text.secondary' }}>
+                      {exp.startDate ? new Date(exp.startDate).toLocaleDateString() : "Start date not specified"} - {exp.endDate ? new Date(exp.endDate).toLocaleDateString() : "Present"}
+                    </Typography>
+                    {exp.description && (
+                      <Typography variant="body2" sx={{ ml: 2, color: 'text.secondary' }}>
+                        {exp.description}
+                      </Typography>
+                    )}
+                  </Box>
+                ))
+              ) : (
+                <Typography variant="body2" sx={{ ml: 2 }}>
+                  No experience added
+                </Typography>
+              )}
+
+              <Typography variant="subtitle1" mt={3}>
+                Resume
+              </Typography>
+              {selectedUser.profile?.resume ? (
+                <Typography variant="body2" sx={{ ml: 2 }}>
+                  <a href={selectedUser.profile.resume.url} target="_blank" rel="noopener noreferrer" style={{ color: '#1976d2' }}>
+                    View Resume (PDF)
+                  </a>
+                </Typography>
+              ) : (
+                <Typography variant="body2" sx={{ ml: 2 }}>
+                  No resume uploaded
+                </Typography>
+              )}
             </Stack>
           ) : (
             <Box className="flex justify-center py-6">
