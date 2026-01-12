@@ -67,12 +67,26 @@ const initialState: InterviewState = {
 export const scheduleInterviewThunk = createAsyncThunk<
   Interview,
   { jobId: string; data: Partial<Interview> }
->("interview/schedule", async ({ jobId, data }, { rejectWithValue }) => {
+>("interview/schedule", async ({ jobId, data }, { rejectWithValue, dispatch }) => {
   try {
     const res = await api.post(
       `/api/admin/interview/jobs/${jobId}/interviews`,
       data
     );
+    
+    // Update application status to "interview" after scheduling
+    await api.put(`/api/admin/application/jobs/${jobId}/status`, {
+      status: "interview"
+    });
+    
+    // Refresh applications to update the UI
+    const applicationsRes = await api.get("/api/admin/application/applications");
+    dispatch({ type: "adminApplications/fetch/fulfilled", payload: applicationsRes.data });
+    
+    // Refresh interviews to update the UI
+    const interviewsRes = await api.get(`/api/admin/interview/job/${jobId}`);
+    dispatch({ type: "interview/getByJob/fulfilled", payload: interviewsRes.data });
+    
     return res.data.interview;
   } catch (err: any) {
     return rejectWithValue(

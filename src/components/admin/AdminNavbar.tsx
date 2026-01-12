@@ -13,11 +13,13 @@ import {
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/redux/store";
 import { logoutUser } from "@/redux/authSlice";
+import { useAuth } from "@/Context/AuthContext";
 
 export default function AdminNavbar() {
   const pathname = usePathname();
    const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const { isAuthenticated, loading, logout } = useAuth();
   
   const links = [
       { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -30,11 +32,12 @@ export default function AdminNavbar() {
     
 ];
 
-   const handleLogout = async () => {
-    await dispatch(logoutUser());
-    router.push("/authentication");
+ const handleLogout = async () => {
+    await dispatch(logoutUser()).unwrap();
+    logout(); // clear auth context
+    router.replace("/authentication");
   };
-  
+
 
   return (
     <aside className="w-64 min-h-screen bg-white border-r">
