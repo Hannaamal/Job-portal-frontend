@@ -5,6 +5,11 @@ const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
   withCredentials: true,
   timeout: 10000, // 10 second timeout
+  // Additional cookie configurations
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  }
 });
 
 // Add interceptor to log requests for debugging
