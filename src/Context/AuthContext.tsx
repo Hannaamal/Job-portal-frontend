@@ -4,6 +4,9 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import Cookies from "js-cookie";
 import api from "@/lib/api";
 import { User } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { fetchMe } from "@/redux/authSlice";
+import type { AppDispatch } from "@/redux/store";
 
 interface User {
   _id: string;
@@ -35,30 +38,30 @@ const AuthContext = createContext<AuthContextProps>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-
-
   const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch<AppDispatch>();
 
   // Load token from cookies on refresh
-
-
-
   useEffect(() => {
-  const checkAuth = async () => {
-    try {
-      const res = await api.get("/api/auth/me", {
-        withCredentials: true, // 🔥 REQUIRED
-      });
-      setUser(res.data.user);
-    } catch {
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const checkAuth = async () => {
+      try {
+        const res = await api.get("/api/auth/me", {
+          withCredentials: true, // 🔥 REQUIRED
+        });
+        setUser(res.data.user);
+        // Also dispatch to Redux store
+        dispatch(fetchMe());
+      } catch {
+        setUser(null);
+        // Clear Redux store on auth failure
+        dispatch(fetchMe());
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  checkAuth();
-}, []);
+    checkAuth();
+  }, [dispatch]);
 
 
 
