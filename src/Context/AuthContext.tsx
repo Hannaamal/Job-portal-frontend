@@ -17,9 +17,9 @@ interface AuthContextProps {
   token: string | null;
   loading: boolean;
   isAuthenticated: boolean;
-  login: (token: string, user: User) => void;
+  login: (user: User) => void;
   logout: () => void;
-  setAuthenticatedUser: (token: string, user: User) => void;
+  setAuthenticatedUser: (user: User) => void;
 }
 
 const AuthContext = createContext<AuthContextProps>({
@@ -62,28 +62,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
 
-  // Login function
-const login = (token: string, user: User) => {
-  setToken(token); // optional
+  // Login function - simplified since token is HTTP-only
+const login = (user: User) => {
   setUser(user);
   setLoading(false);
 };
 
-
-  const setAuthenticatedUser = (token: string, user: User) => {
-    Cookies.set("auth_token", token, { path: "/" });
-    setToken(token);
+  // Set authenticated user - simplified since token is HTTP-only
+  const setAuthenticatedUser = (user: User) => {
     setUser(user);
     setLoading(false);
   };
 
   // Logout
   const logout = async () => {
-  await api.post("/api/auth/logout", {}, { withCredentials: true });
-  setToken(null);
-  setUser(null);
-  setLoading(false);
-};
+    try {
+      await api.post("/api/auth/logout", {}, { withCredentials: true });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setUser(null);
+      setToken(null);
+      setLoading(false);
+    }
+  };
 
 
   return (

@@ -62,7 +62,7 @@ export default function AuthPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
 
-      login(data.token, data.user);
+      login(data.user);
 
       if (data.user.role === "admin") {
         router.push("/admin/dashboard");
@@ -81,10 +81,9 @@ export default function AuthPage() {
     try {
       const res = await axios.post("/api/auth/register", registerForm);
 
-      const token = res.data.token;
       const user = res.data.user;
 
-      setAuthenticatedUser(token, user);
+      setAuthenticatedUser(user);
       router.push("/");
     } catch (err: any) {
       alert(err?.response?.data?.message || "Registration failed");

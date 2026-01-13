@@ -8,16 +8,9 @@ const api = axios.create({
 
 // Add interceptor OUTSIDE axios.create()
 api.interceptors.request.use((config) => {
- const token = Cookies.get("auth_token");
- const role = Cookies.get("user_role");
-  // FIXED
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
+  // Since auth_token is HTTP-only, we don't read it here
+  // The cookie will be automatically sent with withCredentials: true
   return config;
 });
 
 export default api;
-
