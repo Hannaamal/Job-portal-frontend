@@ -17,12 +17,6 @@ export default function AdminNotAuthorizedPage() {
           >
             Go Home
           </a>
-          <a
-            href="/authentication"
-            className="rounded-lg border border-gray-300 px-5 py-2 text-gray-700 hover:bg-gray-100 transition"
-          >
-            Login
-          </a>
         </div>
       </div>
     </div>
