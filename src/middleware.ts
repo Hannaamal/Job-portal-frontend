@@ -4,12 +4,15 @@ import type { NextRequest } from "next/server";
 function decodeToken(token: string) {
   try {
     const base64 = token.split(".")[1];
-    const json = atob(base64.replace(/-/g, "+").replace(/_/g, "/"));
+    const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, "=");
+    const json = atob(padded.replace(/-/g, "+").replace(/_/g, "/"));
     return JSON.parse(json);
-  } catch {
+  } catch (err) {
+    console.log("JWT decode failed", err);
     return null;
   }
 }
+
 
 export function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
@@ -34,8 +37,6 @@ export function middleware(req: NextRequest) {
     path === "/" ||
     path === "/authentication" ||
     path === "/companies" ||
-    path === "/not-authorized" ||
-    path === "/admin/not-authorized" ||
     path.startsWith("/companies/");
 
   /* =====================
