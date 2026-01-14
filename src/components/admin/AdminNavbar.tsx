@@ -10,16 +10,16 @@ import {
   Users,
    LogOut,
 } from "lucide-react";
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "@/redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "@/redux/store";
 import { logoutUser } from "@/redux/authSlice";
-import { useAuth } from "@/Context/AuthContext";
+
 
 export default function AdminNavbar() {
   const pathname = usePathname();
    const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { isAuthenticated, loading, logout } = useAuth();
+
   
   const links = [
       { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -33,10 +33,9 @@ export default function AdminNavbar() {
 ];
 
  const handleLogout = async () => {
-    await dispatch(logoutUser()).unwrap();
-    logout(); // clear auth context
-    router.replace("/authentication");
-  };
+  await dispatch(logoutUser()).unwrap();
+  router.replace("/authentication");
+};
 
 
   return (

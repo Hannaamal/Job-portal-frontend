@@ -22,15 +22,16 @@ import { fetchNotifications } from "@/redux/notificationSlice";
 import { fetchSavedJobs } from "@/redux/jobs/saveJobSlice";
 import { fetchMyProfile } from "@/redux/profileSlice";
 import { BookmarkIcon } from "lucide-react";
-import { useAuth } from "@/Context/AuthContext";
 import { logoutUser } from "@/redux/authSlice";
 
 export default function Navbar() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const pathname = usePathname(); // ✅ get current path
-  const { isAuthenticated, loading, logout } = useAuth();
-  const { role } = useSelector((state: RootState) => state.auth);
+
+  const { isAuthenticated, loading, role } = useSelector(
+  (state: RootState) => state.auth);
+
   const isAdmin = isAuthenticated && role === "admin";
 
   const notifications = useSelector(
@@ -57,21 +58,21 @@ export default function Navbar() {
   }, [dispatch, isAuthenticated]);
 
   // Prevent flicker
-  if (loading && isAuthenticated) {
-    console.log("Navbar auth:", isAuthenticated, loading);
+  if (loading) {
+  return <div className="h-16 bg-white shadow-sm"></div>;
+}
 
-    return <div className="h-16 bg-white shadow-sm"></div>;
-  }
   const handleCloseMenu = () => {
     setAnchorEl(null);
   };
 
-  const handleLogout = async () => {
-    handleCloseMenu();
-    await dispatch(logoutUser()).unwrap();
-    logout(); // clear auth context
-    router.replace("/authentication");
-  };
+ const handleLogout = async () => {
+  handleCloseMenu();
+  await dispatch(logoutUser()).unwrap();
+  router.replace("/authentication");
+};
+
+
 
   const getLinkClass = (link: string) =>
     pathname === link

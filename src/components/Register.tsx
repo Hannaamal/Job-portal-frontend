@@ -13,11 +13,13 @@ import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 
 import axios from "@/lib/api";
-import { useAuth } from "@/Context/AuthContext";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "@/redux/store";
+import { loginUser, fetchMe } from "@/redux/authSlice";
 
 export default function AuthPage() {
   const router = useRouter();
-  const { login, setAuthenticatedUser } = useAuth();
+  const dispatch = useDispatch<AppDispatch>();
 
   const [isSignUp, setIsSignUp] = useState(false);
 
@@ -36,7 +38,7 @@ export default function AuthPage() {
   });
 
   /* ---------- HANDLERS ---------- */
-  const handleLoginChange = (e: any) => {
+  const handleLoginChange = (e: ChangeEvent<HTMLInputElement>) => {
     setLoginForm({ ...loginForm, [e.target.name]: e.target.value });
   };
 
@@ -62,7 +64,13 @@ export default function AuthPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
 
-      login(data.user);
+      await dispatch(fetchMe()).unwrap();
+
+      if (data.user.role === "admin") {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/");
+      }
 
       if (data.user.role === "admin") {
         router.push("/admin/dashboard");
@@ -83,7 +91,7 @@ export default function AuthPage() {
 
       const user = res.data.user;
 
-      setAuthenticatedUser(user);
+      await dispatch(fetchMe()).unwrap();
       router.push("/");
     } catch (err: any) {
       alert(err?.response?.data?.message || "Registration failed");
