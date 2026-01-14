@@ -34,6 +34,8 @@ export function middleware(req: NextRequest) {
     path === "/" ||
     path === "/authentication" ||
     path === "/companies" ||
+    path === "/not-authorized" ||
+    path === "/admin/not-authorized" ||
     path.startsWith("/companies/");
 
   /* =====================
