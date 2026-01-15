@@ -1,145 +1,33 @@
-// import { NextResponse } from "next/server";
-// import type { NextRequest } from "next/server";
-
-// function decodeToken(token: string) {
-//   try {
-//     const base64 = token.split(".")[1];
-//     const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, "=");
-//     const json = atob(padded.replace(/-/g, "+").replace(/_/g, "/"));
-//     return JSON.parse(json);
-//   } catch (err) {
-//     console.log("JWT decode failed", err);
-//     return null;
-//   }
-// }
-
-
-// export function middleware(req: NextRequest) {
-//   const path = req.nextUrl.pathname;
-//   const token = req.cookies.get("auth_token")?.value;
-
-//   /* =====================
-//      ALWAYS-ALLOWED ROUTES
-//      (CRITICAL FOR NO LOOPS)
-//   ===================== */
-//   const alwaysAllowed =
-//     path === "/authentication" ||
-//     path === "/not-authorized" ||
-//     path === "/admin/not-authorized";
-
-//   if (alwaysAllowed) {
-//     return NextResponse.next();
-//   }
-
-//   /* =====================
-//      PUBLIC ROUTES
-//   ===================== */
-//   const isPublic =
-//     path === "/" ||
-//     path === "/authentication" ||
-//     path === "/companies" ||
-//     path.startsWith("/companies/");
-
-//   /* =====================
-//      NOT LOGGED IN
-//   ===================== */
-//   if (!token) {
-//     if (isPublic) return NextResponse.next();
-//     return NextResponse.redirect(new URL("/authentication", req.url));
-//   }
-
-//   /* =====================
-//      LOGGED IN - HANDLE AUTHENTICATION PAGE
-//   ===================== */
-//   if (token && path === "/authentication") {
-//     const payload = decodeToken(token);
-    
-//     if (payload?.role === "admin") {
-//       return NextResponse.redirect(new URL("/admin/dashboard", req.url));
-//     }
-    
-//     if (payload?.role === "user") {
-//       return NextResponse.redirect(new URL("/", req.url));
-//     }
-    
-//     // If token is invalid or no role, redirect to auth
-//     const res = NextResponse.redirect(new URL("/authentication", req.url));
-//     return res;
-//   }
-
-//   const payload = decodeToken(token);
-
-//   if (!payload?.role) {
-//     const res = NextResponse.redirect(new URL("/authentication", req.url));
-//     return res;
-//   }
-
-//   /* =====================
-//      ADMIN
-//   ===================== */
-//   if (payload.role === "admin") {
-//     if (!path.startsWith("/admin")) {
-//       return NextResponse.redirect(
-//         new URL("/admin/not-authorized", req.url)
-//       );
-//     }
-
-//     return NextResponse.next();
-//   }
-
-//   /* =====================
-//      USER
-//   ===================== */
-//   if (payload.role === "user") {
-//     if (path.startsWith("/admin")) {
-//       return NextResponse.redirect(
-//         new URL("/not-authorized", req.url)
-//       );
-//     }
-
-//     return NextResponse.next();
-//   }
-
-//   return NextResponse.redirect(new URL("/authentication", req.url));
-// }
-
-// export const config = {
-//   matcher: [
-//     "/((?!api|_next/static|_next/image|favicon.ico|images|icons|fonts|assets).*)",
-//   ],
-// };
-
-
-
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 function decodeToken(token: string) {
   try {
     const base64 = token.split(".")[1];
-    const padded = base64.padEnd(
-      base64.length + (4 - (base64.length % 4)) % 4,
-      "="
-    );
+    const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, "=");
     const json = atob(padded.replace(/-/g, "+").replace(/_/g, "/"));
     return JSON.parse(json);
-  } catch {
+  } catch (err) {
+    console.log("JWT decode failed", err);
     return null;
   }
 }
+
 
 export function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
   const token = req.cookies.get("auth_token")?.value;
 
   /* =====================
-     ALWAYS ALLOWED
+     ALWAYS-ALLOWED ROUTES
+     (CRITICAL FOR NO LOOPS)
   ===================== */
-  if (
+  const alwaysAllowed =
     path === "/authentication" ||
     path === "/not-authorized" ||
-    path === "/admin/not-authorized"
-  ) {
+    path === "/admin/not-authorized";
+
+  if (alwaysAllowed) {
     return NextResponse.next();
   }
 
@@ -148,6 +36,7 @@ export function middleware(req: NextRequest) {
   ===================== */
   const isPublic =
     path === "/" ||
+    path === "/authentication" ||
     path === "/companies" ||
     path.startsWith("/companies/");
 
@@ -160,29 +49,33 @@ export function middleware(req: NextRequest) {
   }
 
   /* =====================
-     LOGGED IN
+     LOGGED IN - HANDLE AUTHENTICATION PAGE
   ===================== */
+  if (token && path === "/authentication") {
+    const payload = decodeToken(token);
+    
+    if (payload?.role === "admin") {
+      return NextResponse.redirect(new URL("/admin/dashboard", req.url));
+    }
+    
+    if (payload?.role === "user") {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+    
+    // If token is invalid or no role, redirect to auth
+    const res = NextResponse.redirect(new URL("/authentication", req.url));
+    return res;
+  }
+
   const payload = decodeToken(token);
 
-  // Invalid token → treat as logged out (NO cookie delete here)
   if (!payload?.role) {
-    return NextResponse.redirect(new URL("/authentication", req.url));
+    const res = NextResponse.redirect(new URL("/authentication", req.url));
+    return res;
   }
 
   /* =====================
-     AUTH PAGE REDIRECT
-  ===================== */
-  if (path === "/authentication") {
-    if (payload.role === "admin") {
-      return NextResponse.redirect(
-        new URL("/admin/dashboard", req.url)
-      );
-    }
-    return NextResponse.redirect(new URL("/", req.url));
-  }
-
-  /* =====================
-     ADMIN ROUTES
+     ADMIN
   ===================== */
   if (payload.role === "admin") {
     if (!path.startsWith("/admin")) {
@@ -190,11 +83,12 @@ export function middleware(req: NextRequest) {
         new URL("/admin/not-authorized", req.url)
       );
     }
+
     return NextResponse.next();
   }
 
   /* =====================
-     USER ROUTES
+     USER
   ===================== */
   if (payload.role === "user") {
     if (path.startsWith("/admin")) {
@@ -202,6 +96,7 @@ export function middleware(req: NextRequest) {
         new URL("/not-authorized", req.url)
       );
     }
+
     return NextResponse.next();
   }
 
