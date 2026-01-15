@@ -17,6 +17,7 @@ import StatCard from "@/components/admin/StatCard";
 export default function AdminDashboard() {
   const dispatch = useDispatch<AppDispatch>();
   const [company, setCompany] = useState<string>("");
+  
 
   const { stats, applications, jobStats, loading, error } = useSelector(
     (state: RootState) => state.adminDashboard
@@ -68,10 +69,9 @@ export default function AdminDashboard() {
       </div>
 
       {/* MIDDLE SECTION */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ApplicationsCard data={applications} />
-        <ResourceStatusCard data={stats} />
-        <InterviewsCard data={[{ count: stats.interviews }]} />
+        <InterviewsCard />
       </div>
 
       {/* JOB STATS */}

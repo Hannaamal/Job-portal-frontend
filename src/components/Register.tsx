@@ -68,14 +68,10 @@ export default function AuthPage() {
 
       if (data.user.role === "admin") {
         router.push("/admin/dashboard");
+         router.refresh();
       } else {
         router.push("/");
-      }
-
-      if (data.user.role === "admin") {
-        router.push("/admin/dashboard");
-      } else {
-        router.push("/");
+         router.refresh();
       }
     } catch (err: any) {
       alert(err.message || "Login failed");

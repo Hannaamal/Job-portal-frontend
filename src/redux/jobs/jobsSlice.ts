@@ -30,15 +30,7 @@ export interface FetchJobsParams {
   [key: string]: string | number | boolean;
 }
 
-interface JobsState {
-  jobs: Job[];
-  job: Job | null;
-  selectedJob: Job | null;
-  loading: boolean;
-  error: string | null;
-  page: number;
-  pages: number;
-}
+
 
 // Fetch all jobs
 export const fetchJobs = createAsyncThunk(

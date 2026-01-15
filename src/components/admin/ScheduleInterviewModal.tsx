@@ -48,6 +48,8 @@ export default function ScheduleInterviewModal({ jobId, onClose }: Props) {
     location: "",
     instructions: "",
   });
+  const today = new Date();
+  const minDate = today.toISOString().split("T")[0]; // "YYYY-MM-DD"
 
 
   const handleChange = (
@@ -140,6 +142,7 @@ export default function ScheduleInterviewModal({ jobId, onClose }: Props) {
             type="date"
             name="date"
             value={form.date}
+            min={minDate} 
             onChange={handleChange}
             className="w-full mt-1 border rounded-lg p-2"
           />

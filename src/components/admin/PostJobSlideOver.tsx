@@ -34,6 +34,9 @@ export default function PostJobSlideOver({
   const [skills, setSkills] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [form, setForm] = useState(initialFormState);
+  const today = new Date();
+  const minDate = today.toISOString().split("T")[0]; // "YYYY-MM-DD"
+
 
   useEffect(() => {
   if (!isOpen) {
@@ -353,9 +356,6 @@ export default function PostJobSlideOver({
 
           {/* Company */}
           <div>
-            <label className="block text-xs text-gray-500 mb-1">
-              Company ID
-            </label>
             <div>
               <label className="block text-xs text-gray-500 mb-1">
                 Company
@@ -387,6 +387,7 @@ export default function PostJobSlideOver({
               type="date"
               name="expiresAt"
               value={form.expiresAt}
+               min={minDate}  // set minimum date to today
               onChange={handleChange}
               className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2"
             />

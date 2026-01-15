@@ -4,9 +4,10 @@ import api from "@/lib/api";
 /* ---------------- TYPES ---------------- */
 
 export interface ApplicationStat {
+  applicant: string;
   title: string;
   received: number;
-  hold: number;
+  interviews: number;
   rejected: number;
 }
 
@@ -73,12 +74,47 @@ const dashboardSlice = createSlice({
       .addCase(fetchDashboard.fulfilled, (state, action) => {
         state.loading = false;
         state.stats = {
-          interviews: action.payload.interviews,
-          shortlisted: action.payload.shortlisted,
-          hired: action.payload.hired,
-          jobs: action.payload.jobs,
+          interviews: action.payload.interviews ?? 0,
+          shortlisted: action.payload.shortlisted ?? 0,
+          hired: action.payload.hired ?? 0,
+          jobs: action.payload.jobs ?? 0,
         };
-        state.applications = action.payload.applications;
+
+        // Map applications and normalize field names
+        console.log("API Response applications:", action.payload.applications);
+        state.applications = (action.payload.applications || []).map(
+          (app: any) => {
+            console.log("Processing app:", app);
+            console.log("Applicant data:", app.applicant);
+            
+            // Handle different possible structures for applicant data
+            let applicantName = "Unknown";
+            
+            if (app.applicant) {
+              if (typeof app.applicant === 'string') {
+                // If applicant is just an ID string, we can't get the name
+                applicantName = "Applicant details not available";
+              } else if (typeof app.applicant === 'object') {
+                // If applicant is an object, try to get the name
+                applicantName = app.applicant.name || app.applicant.fullName || app.applicant.username || "Unknown";
+              }
+            } else if (app.applicantName) {
+              // Direct applicant name field
+              applicantName = app.applicantName;
+            } else if (app.name) {
+              // Simple name field
+              applicantName = app.name;
+            }
+
+            return {
+              applicant: applicantName,
+              title: app.title || "Untitled Job",
+              received: app.received ?? 0,
+              interviews: app.interviews ?? app.interview ?? app.hold ?? 0,
+              rejected: app.rejected ?? 0,
+            };
+          }
+        );
         state.jobStats = action.payload.jobStats;
       })
       .addCase(fetchDashboard.rejected, (state, action) => {

@@ -40,9 +40,8 @@ export default function AdminJobsPage() {
     setMounted(true);
   }, []);
   useEffect(() => {
-  dispatch(fetchAdminJobs());
-}, [dispatch]);
-
+    dispatch(fetchAdminJobs());
+  }, [dispatch]);
 
   useEffect(() => {
     const delay = setTimeout(() => {
@@ -93,16 +92,15 @@ export default function AdminJobsPage() {
   };
 
   const handleEditSave = async (updatedData: any) => {
-  if (!editJob) return;
+    if (!editJob) return;
 
-  await dispatch(updateJob({ id: editJob._id, data: updatedData }));
-  
-  // Refetch jobs to ensure latest data
-  dispatch(fetchAdminJobs(undefined));
+    await dispatch(updateJob({ id: editJob._id, data: updatedData }));
 
-  setEditJob(null);
-};
+    // Refetch jobs to ensure latest data
+    dispatch(fetchAdminJobs(undefined));
 
+    setEditJob(null);
+  };
 
   const columns: GridColDef[] = [
     { field: "title", headerName: "Job Title", flex: 1, minWidth: 180 },
@@ -125,14 +123,25 @@ export default function AdminJobsPage() {
       field: "isActive",
       headerName: "Status",
       width: 120,
-      renderCell: (params) => (
-        <Chip
-          size="small"
-          label={params.value ? "Active" : "Closed"}
-          color={params.value ? "success" : "default"}
-        />
-      ),
+      renderCell: (params) => {
+        const job = params.row;
+        let status = "Closed";
+        let color: "success" | "default" = "default";
+
+        if (job.isActive) {
+          const now = new Date();
+          const expiry = job.expiresAt ? new Date(job.expiresAt) : null;
+
+          if (!expiry || expiry >= now) {
+            status = "Active";
+            color = "success";
+          }
+        }
+
+        return <Chip size="small" label={status} color={color} />;
+      },
     },
+
     {
       field: "expiresAt",
       headerName: "Expiry",
@@ -204,18 +213,14 @@ export default function AdminJobsPage() {
 
         {mounted && (
           <DataGrid
-  rows={jobs}
-  columns={columns}
-  getRowId={(row) => row._id}
-  autoHeight
-  pageSizeOptions={[5, 10, 20]}
-  initialState={{
-    pagination: { paginationModel: { page: 0, pageSize: 10 } },
-  }}
-
-
-
-
+            rows={jobs}
+            columns={columns}
+            getRowId={(row) => row._id}
+            autoHeight
+            pageSizeOptions={[5, 10, 20]}
+            initialState={{
+              pagination: { paginationModel: { page: 0, pageSize: 10 } },
+            }}
             sx={{
               border: "none",
 
