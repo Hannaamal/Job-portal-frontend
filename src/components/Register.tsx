@@ -68,10 +68,11 @@ export default function AuthPage() {
 
       if (data.user.role === "admin") {
         router.push("/admin/dashboard");
-         router.refresh();
+         window.location.href = "/admin/dashboard";
+
       } else {
-        router.push("/");
-         router.refresh();
+        window.location.href = "/";
+
       }
     } catch (err: any) {
       alert(err.message || "Login failed");
