@@ -25,7 +25,7 @@ ALWAYS-ALLOWED ROUTES
 (CRITICAL FOR NO LOOPS)
 ===================== */
 const alwaysAllowed =
-path === "/authentication" ||
+// path === "/authentication" ||
 path === "/not-authorized" ||
 path === "/admin/not-authorized";
 
