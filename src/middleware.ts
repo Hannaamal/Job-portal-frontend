@@ -114,91 +114,27 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export const dynamic = "force-dynamic";
-
-function decodeJWT(token: string) {
-  try {
-    const payload = token.split(".")[1];
-    return JSON.parse(
-      Buffer.from(payload, "base64").toString("utf-8")
-    );
-  } catch {
-    return null;
-  }
-}
-
 export function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
+  const path = req.nextUrl.pathname;
   const token = req.cookies.get("auth_token")?.value;
 
-  /* ======================
-     ALWAYS ALLOWED
-  ====================== */
-  if (
-    pathname === "/authentication" ||
-    pathname === "/not-authorized" ||
-    pathname === "/admin/not-authorized"
-  ) {
-    return NextResponse.next();
-  }
+  const publicRoutes = [
+    "/",
+    "/authentication",
+    "/companies",
+  ];
 
-  /* ======================
-     PUBLIC ROUTES
-  ====================== */
-  const isPublic =
-    pathname === "/" ||
-    pathname === "/companies" ||
-    pathname.startsWith("/companies/");
+  const isPublic = publicRoutes.some(
+    (route) => path === route || path.startsWith(route + "/")
+  );
 
-  if (!token) {
-    return isPublic
-      ? NextResponse.next()
-      : NextResponse.redirect(new URL("/authentication", req.url));
-  }
-
-  const payload = decodeJWT(token);
-  if (!payload?.role) {
+  if (!token && !isPublic) {
     return NextResponse.redirect(new URL("/authentication", req.url));
   }
 
-  /* ======================
-     AUTH PAGE REDIRECT
-  ====================== */
-  if (pathname === "/authentication") {
-    return NextResponse.redirect(
-      new URL(
-        payload.role === "admin" ? "/admin/dashboard" : "/",
-        req.url
-      )
-    );
-  }
-
-  /* ======================
-     ADMIN
-  ====================== */
-  if (payload.role === "admin") {
-    if (!pathname.startsWith("/admin")) {
-      return NextResponse.redirect(
-        new URL("/admin/not-authorized", req.url)
-      );
-    }
-    return NextResponse.next();
-  }
-
-  /* ======================
-     USER
-  ====================== */
-  if (payload.role === "user") {
-    if (pathname.startsWith("/admin")) {
-      return NextResponse.redirect(
-        new URL("/not-authorized", req.url)
-      );
-    }
-    return NextResponse.next();
-  }
-
-  return NextResponse.redirect(new URL("/authentication", req.url));
+  return NextResponse.next();
 }
+
 
 export const config = {
   matcher: [

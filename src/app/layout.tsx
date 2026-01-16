@@ -3,6 +3,7 @@ import "./globals.css";
 import ReduxProvider from "@/components/ReduxProvider";
 import AppNavbar from "@/components/NavbarWrap";
 import { AuthProvider } from "@/Context/AuthContext";
+import AuthBootstrapper from "@/components/common/authboothstaper";
 
 
 
@@ -25,6 +26,7 @@ export default function RootLayout({
       <body>
         
         <ReduxProvider>
+          <AuthBootstrapper />
            <AuthProvider> 
              <AppNavbar> 
               {children}
