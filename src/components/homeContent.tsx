@@ -42,15 +42,14 @@ export default function HomeContent() {
     );
   }, [dispatch, keyword, location]);
 
-  // AUTO SELECT FIRST JOB
-
- useEffect(() => {
-  if (paginatedJobs.length > 0) {
-    dispatch(setSelectedJob(paginatedJobs[0]));
-  } else {
-    dispatch(setSelectedJob(null));
-  }
-}, [paginatedJobs, dispatch]);
+  // AUTO SELECT FIRST JOB (only when no job is selected)
+  useEffect(() => {
+    if (paginatedJobs.length > 0 && !selectedJob) {
+      dispatch(setSelectedJob(paginatedJobs[0]));
+    } else if (paginatedJobs.length === 0) {
+      dispatch(setSelectedJob(null));
+    }
+  }, [paginatedJobs, selectedJob, dispatch]);
 
 
   const handlePageChange = (_: any, value: number) => {
