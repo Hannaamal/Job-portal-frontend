@@ -47,7 +47,7 @@ export const loginUser = createAsyncThunk(
       return res.data.user; // token is in httpOnly cookie
     } catch (err: any) {
       return rejectWithValue(
-        err.response?.data?.message || "Login failed"
+        err.response?.data?.message 
       );
     }
   }
