@@ -145,20 +145,6 @@
 import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
 
-function decodeJwt(token: string) {
-  try {
-    const base64 = token
-      .split(".")[1]
-      .replace(/-/g, "+")
-      .replace(/_/g, "/");
-
-    const json = atob(base64);
-    return JSON.parse(json);
-  } catch {
-    return null;
-  }
-}
-
 export const middleware = (req: NextRequest) => {
   const token = req.cookies.get("auth_token")?.value;
   const url = req.nextUrl.pathname;
@@ -169,8 +155,24 @@ export const middleware = (req: NextRequest) => {
     "/companies",
     "/not-authorized",
     "/admin/not-authorized",
-    "/profile",
+    "/profile"
   ];
+
+  // Logged-in user visiting login/signup
+  if (token && url.startsWith("/authentication")) {
+    try {
+      const payload = JSON.parse(
+        Buffer.from(token.split(".")[1], "base64").toString()
+      );
+
+      const role = payload.role;
+
+      if (role === "admin") return NextResponse.redirect(new URL("/admin", req.url));
+      if (role === "user") return NextResponse.redirect(new URL("/", req.url));
+    } catch {
+      return NextResponse.next(); // invalid token
+    }
+  }
 
   // Allow public routes
   if (publicRoutes.includes(url) || url.startsWith("/companies/")) {
@@ -182,18 +184,15 @@ export const middleware = (req: NextRequest) => {
     return NextResponse.redirect(new URL("/authentication", req.url));
   }
 
-  const payload = decodeJwt(token);
-
-  if (!payload?.role) {
+  let role: string;
+  try {
+    const payload = JSON.parse(
+      Buffer.from(token.split(".")[1], "base64").toString()
+    );
+    role = payload.role;
+    if (!role) throw new Error("No role");
+  } catch {
     return NextResponse.redirect(new URL("/authentication", req.url));
-  }
-
-  const role = payload.role;
-
-  // Logged-in user visiting login page
-  if (url.startsWith("/authentication")) {
-    if (role === "admin") return NextResponse.redirect(new URL("/admin", req.url));
-    if (role === "user") return NextResponse.redirect(new URL("/", req.url));
   }
 
   // Admin routes
