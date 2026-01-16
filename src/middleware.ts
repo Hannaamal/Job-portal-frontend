@@ -111,33 +111,123 @@
 // ],
 // };
 
+// import { NextResponse } from "next/server";
+// import type { NextRequest } from "next/server";
+
+// export function middleware(req: NextRequest) {
+//   const path = req.nextUrl.pathname;
+//   const token = req.cookies.get("auth_token")?.value;
+
+//   const publicRoutes = [
+//     "/",
+//     "/authentication",
+//     "/companies",
+//   ];
+
+//   const isPublic = publicRoutes.some(
+//     (route) => path === route || path.startsWith(route + "/")
+//   );
+
+//   if (!token && !isPublic) {
+//     return NextResponse.redirect(new URL("/authentication", req.url));
+//   }
+
+//   return NextResponse.next();
+// }
+
+
+// export const config = {
+//   matcher: [
+//     "/((?!api|_next/static|_next/image|favicon.ico|images|icons|fonts|assets).*)",
+//   ],
+// };
+
+
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextRequest } from "next/server";
 
-export function middleware(req: NextRequest) {
-  const path = req.nextUrl.pathname;
+export const middleware = (req: NextRequest) => {
   const token = req.cookies.get("auth_token")?.value;
+  const url = req.nextUrl.pathname;
 
+  // ✅ PUBLIC ROUTES
   const publicRoutes = [
     "/",
     "/authentication",
     "/companies",
+    "/not-authorized",
+    "/admin/not-authorized",
+    "/profile"
   ];
 
-  const isPublic = publicRoutes.some(
-    (route) => path === route || path.startsWith(route + "/")
-  );
+  // 🟢 HANDLE LOGGED-IN USER VISITING LOGIN / SIGNUP
+  if (token && (url === "/authentication")) {
+    try {
+      const payload = JSON.parse(
+        Buffer.from(token.split(".")[1], "base64").toString()
+      );
 
-  if (!token && !isPublic) {
+      const role = payload.user_role;
+
+      if (role === "admin") {
+        return NextResponse.redirect(new URL("/admin", req.url));
+      }
+
+      if (role === "user") {
+        return NextResponse.redirect(new URL("/", req.url));
+      }
+    } catch {
+      // invalid token → allow login page
+      return NextResponse.next();
+    }
+  }
+
+  // ✅ ALLOW PUBLIC ROUTES
+  if (publicRoutes.includes(url) || url.startsWith("/companies/")) {
+    return NextResponse.next();
+  }
+
+  // 🔐 NOT LOGGED IN
+  if (!token) {
     return NextResponse.redirect(new URL("/authentication", req.url));
   }
 
-  return NextResponse.next();
-}
+  let role: string;
 
+  try {
+    const payload = JSON.parse(
+      Buffer.from(token.split(".")[1], "base64").toString()
+    );
+
+    role = payload.user_role;
+    if (!role) throw new Error("No role");
+  } catch {
+    return NextResponse.redirect(new URL("/authentication", req.url));
+  }
+
+  // 🔐 ADMIN ROUTES
+  if (url.startsWith("/admin")) {
+    if (role !== "admin") {
+      return NextResponse.redirect(
+        new URL("/admin/not-authorized", req.url)
+      );
+    }
+  }
+
+  // 🔐 USER ROUTES
+  if (!url.startsWith("/admin")) {
+    if (role === "admin") {
+      return NextResponse.redirect(new URL("/not-authorized", req.url));
+    }
+
+    if (role !== "user") {
+      return NextResponse.redirect(new URL("/not-authorized", req.url));
+    }
+  }
+
+  return NextResponse.next();
+};
 
 export const config = {
-  matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|images|icons|fonts|assets).*)",
-  ],
+  matcher: ["/((?!api|_next|static|favicon.ico|assets|images).*)"],
 };
