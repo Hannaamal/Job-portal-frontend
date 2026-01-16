@@ -44,7 +44,7 @@ export const loginUser = createAsyncThunk(
   async (formData: any, { rejectWithValue }) => {
     try {
       const res = await api.post("/api/auth/login", formData);
-      return res.data.user; // token is in httpOnly cookie
+      return res.data.user; 
     } catch (err: any) {
       return rejectWithValue(
         err.response?.data?.message 
@@ -122,25 +122,37 @@ const authSlice = createSlice({
       })
 
       /* ME */
-      .addCase(fetchMe.fulfilled, (state, action) => {
-        state.user = action.payload;
-        state.role = action.payload.role;
-        state.isAuthenticated = true;
-      })
-      .addCase(fetchMe.rejected, (state) => {
-        state.user = null;
-        state.role = null;
-        state.isAuthenticated = false;
-      })
-
+      .addCase(fetchMe.pending, (state) => {
+  state.loading = true;
+})
+.addCase(fetchMe.fulfilled, (state, action) => {
+  state.loading = false;
+  state.user = action.payload;
+  state.role = action.payload.role;
+  state.isAuthenticated = true;
+})
+.addCase(fetchMe.rejected, (state) => {
+  state.loading = false;
+  state.user = null;
+  state.role = null;
+  state.isAuthenticated = false;
+})
       /* LOGOUT */
+      .addCase(logoutUser.pending, (state) => {
+        state.loading = true; 
+      })
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.role = null;
         state.isAuthenticated = false;
         state.loading = false;
-      });
-  },
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      }
+      );
+  }
 });
 
 export default authSlice.reducer;

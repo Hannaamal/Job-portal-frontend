@@ -142,7 +142,6 @@
 //   ],
 // };
 
-
 import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
 
@@ -150,7 +149,6 @@ export const middleware = (req: NextRequest) => {
   const token = req.cookies.get("auth_token")?.value;
   const url = req.nextUrl.pathname;
 
-  // ✅ PUBLIC ROUTES
   const publicRoutes = [
     "/",
     "/authentication",
@@ -160,69 +158,51 @@ export const middleware = (req: NextRequest) => {
     "/profile"
   ];
 
-  // 🟢 HANDLE LOGGED-IN USER VISITING LOGIN / SIGNUP
-  if (token && (url === "/authentication")) {
+  // Logged-in user visiting login/signup
+  if (token && url.startsWith("/authentication")) {
     try {
       const payload = JSON.parse(
         Buffer.from(token.split(".")[1], "base64").toString()
       );
 
-      const role = payload.user_role;
+      const role = payload.role;
 
-      if (role === "admin") {
-        return NextResponse.redirect(new URL("/admin", req.url));
-      }
-
-      if (role === "user") {
-        return NextResponse.redirect(new URL("/", req.url));
-      }
+      if (role === "admin") return NextResponse.redirect(new URL("/admin", req.url));
+      if (role === "user") return NextResponse.redirect(new URL("/", req.url));
     } catch {
-      // invalid token → allow login page
-      return NextResponse.next();
+      return NextResponse.next(); // invalid token
     }
   }
 
-  // ✅ ALLOW PUBLIC ROUTES
+  // Allow public routes
   if (publicRoutes.includes(url) || url.startsWith("/companies/")) {
     return NextResponse.next();
   }
 
-  // 🔐 NOT LOGGED IN
+  // Not logged in
   if (!token) {
     return NextResponse.redirect(new URL("/authentication", req.url));
   }
 
   let role: string;
-
   try {
     const payload = JSON.parse(
       Buffer.from(token.split(".")[1], "base64").toString()
     );
-
-    role = payload.user_role;
+    role = payload.role;
     if (!role) throw new Error("No role");
   } catch {
     return NextResponse.redirect(new URL("/authentication", req.url));
   }
 
-  // 🔐 ADMIN ROUTES
-  if (url.startsWith("/admin")) {
-    if (role !== "admin") {
-      return NextResponse.redirect(
-        new URL("/admin/not-authorized", req.url)
-      );
-    }
+  // Admin routes
+  if (url.startsWith("/admin") && role !== "admin") {
+    return NextResponse.redirect(new URL("/admin/not-authorized", req.url));
   }
 
-  // 🔐 USER ROUTES
-  if (!url.startsWith("/admin")) {
-    if (role === "admin") {
-      return NextResponse.redirect(new URL("/not-authorized", req.url));
-    }
-
-    if (role !== "user") {
-      return NextResponse.redirect(new URL("/not-authorized", req.url));
-    }
+  // User routes
+  if (!url.startsWith("/admin") && role !== "user") {
+    return NextResponse.redirect(new URL("/not-authorized", req.url));
   }
 
   return NextResponse.next();
