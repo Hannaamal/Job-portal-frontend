@@ -2,7 +2,6 @@
 // import type { NextRequest } from "next/server";
 // export const dynamic = "force-dynamic";
 
-
 // function decodeToken(token: string) {
 // try {
 // const base64 = token.split(".")[1];
@@ -14,7 +13,6 @@
 // return null;
 // }
 // }
-
 
 // export function middleware(req: NextRequest) {
 // const path = req.nextUrl.pathname;
@@ -135,7 +133,6 @@
 //   return NextResponse.next();
 // }
 
-
 // export const config = {
 //   matcher: [
 //     "/((?!api|_next/static|_next/image|favicon.ico|images|icons|fonts|assets).*)",
@@ -155,19 +152,33 @@ export const middleware = (req: NextRequest) => {
     "/companies",
     "/not-authorized",
     "/admin/not-authorized",
-    "/profile"
+    "/profile",
   ];
 
   // Logged-in user visiting login/signup
   if (token && url.startsWith("/authentication")) {
     try {
-      const payload = JSON.parse(
-        Buffer.from(token.split(".")[1], "base64").toString()
-      );
+      function decodeJWT(token: string) {
+        try {
+          const base64Url = token.split(".")[1];
+          const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split("")
+              .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+              .join("")
+          );
+          return JSON.parse(jsonPayload);
+        } catch {
+          return null;
+        }
+      }
+      const payload = decodeJWT(token);
 
       const role = payload.role;
 
-      if (role === "admin") return NextResponse.redirect(new URL("/admin", req.url));
+      if (role === "admin")
+        return NextResponse.redirect(new URL("/admin", req.url));
       if (role === "user") return NextResponse.redirect(new URL("/", req.url));
     } catch {
       return NextResponse.next(); // invalid token
@@ -186,9 +197,23 @@ export const middleware = (req: NextRequest) => {
 
   let role: string;
   try {
-    const payload = JSON.parse(
-      Buffer.from(token.split(".")[1], "base64").toString()
-    );
+    function decodeJWT(token: string) {
+      try {
+        const base64Url = token.split(".")[1];
+        const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+        const jsonPayload = decodeURIComponent(
+          atob(base64)
+            .split("")
+            .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+            .join("")
+        );
+        return JSON.parse(jsonPayload);
+      } catch {
+        return null;
+      }
+    }
+
+    const payload = decodeJWT(token);
     role = payload.role;
     if (!role) throw new Error("No role");
   } catch {
@@ -196,6 +221,7 @@ export const middleware = (req: NextRequest) => {
   }
 
   // Admin routes
+  // Only block users from admin pages
   if (url.startsWith("/admin") && role !== "admin") {
     return NextResponse.redirect(new URL("/admin/not-authorized", req.url));
   }
