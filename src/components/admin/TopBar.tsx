@@ -13,9 +13,11 @@ interface Company {
 export default function TopBar({
   value,
   onSearch,
+  onSuccess,
 }: {
   value: string;
   onSearch: (value: string) => void;
+   onSuccess: (message: string) => void;
 }) {
   const input = value;
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -99,6 +101,7 @@ export default function TopBar({
             type="button"
             className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer"
             onClick={() => setSlideOpen(true)}
+            
           >
             <Plus size={16} /> Post a Job
           </button>
@@ -108,6 +111,7 @@ export default function TopBar({
       <PostJobSlideOver
         isOpen={isSlideOpen}
         onClose={() => setSlideOpen(false)}
+        onSuccess={onSuccess}
       />
     </>
   );

@@ -37,7 +37,7 @@ export default function JobApplyButton({ jobId }: JobApplyButtonProps) {
         onClick={() =>
           router.push(`/authentication?redirect=/apply/${jobId}`)
         }
-        className="w-full py-2 rounded-lg bg-blue-600 text-white"
+        className="w-full py-2 rounded-lg bg-blue-600 text-white cursor-pointer"
       >
         Apply
       </button>

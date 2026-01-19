@@ -8,6 +8,7 @@ import { postJobSchema } from "@/validators/postJobValidator";
 interface PostJobSlideOverProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess: (message: string) => void; // ✅ NEW
 }
 const initialFormState = {
   title: "",
@@ -26,6 +27,7 @@ const initialFormState = {
 export default function PostJobSlideOver({
   isOpen,
   onClose,
+  onSuccess,
 }: PostJobSlideOverProps) {
 
 
@@ -137,8 +139,8 @@ export default function PostJobSlideOver({
       };
 
       const res = await api.post("/api/job/", payload);
-      alert(res.data.message);
       onClose();
+      onSuccess(res.data.message || "Job posted successfully");
     } catch (err: any) {
       if (err.name === "ValidationError")
         {

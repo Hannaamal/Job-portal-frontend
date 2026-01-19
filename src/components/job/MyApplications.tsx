@@ -13,7 +13,7 @@ import ConfirmModal from "../common/Conformation";
 export default function MyApplicationsPage() {
   const dispatch = useDispatch<AppDispatch>();
 
-  const { myApplications, loading, error } = useSelector(
+  const { myApplications, loading, error, withdrawingId } = useSelector(
     (state: RootState) => state.myApplications
   );
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -32,7 +32,7 @@ export default function MyApplicationsPage() {
   );
 
   const interviews = myApplications.filter(
-    (app: any) => app.status === "interview"
+    (app: any) => app.status === "interview" && app.interview
   );
 
   const router = useRouter();
@@ -104,21 +104,28 @@ export default function MyApplicationsPage() {
                   {app.company?.name}
                 </p>
                 <p className="text-sm text-gray-600">📍 {app.job?.location}</p>
-                <span className="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-600">
+                <span className={`inline-block mt-3 text-xs px-2 py-1 rounded-full ${getStatusColor(app.status)}`}>
                   {app.status}
                 </span>
               </div>
 
               {/* Withdraw Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleWithdrawClick(app.job._id);
-                }}
-                className="mt-5 text-sm border border-gray-300 px-4 py-2 rounded-lg hover:border-red-500 hover:text-red-600 transition"
-              >
-                Withdraw
-              </button>
+              {app.status === "applied" && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleWithdrawClick(app._id); // use app._id, not job._id
+                  }}
+                  disabled={withdrawingId === app._id} // ✅ disable while loading
+                  className={`mt-5 text-sm border px-4 py-2 rounded-lg transition ${
+                    withdrawingId === app._id
+                      ? "border-gray-300 text-gray-400 cursor-not-allowed"
+                      : "border-gray-300 hover:border-red-500 hover:text-red-600"
+                  }`}
+                >
+                  {withdrawingId === app._id ? "Withdrawing..." : "Withdraw"}
+                </button>
+              )}
             </div>
           ))}
           <ConfirmModal
@@ -149,6 +156,27 @@ export default function MyApplicationsPage() {
       )}
     </div>
   );
+}
+
+/* =======================
+   Status Color Helper
+======================= */
+
+function getStatusColor(status: string) {
+  switch (status.toLowerCase()) {
+    case 'applied':
+      return 'bg-blue-50 text-blue-600';
+    case 'shortlisted':
+      return 'bg-yellow-50 text-yellow-600';
+    case 'rejected':
+      return 'bg-red-50 text-red-600';
+    case 'accepted':
+      return 'bg-green-50 text-green-600';
+    case 'interview':
+      return 'bg-purple-50 text-purple-600';
+    default:
+      return 'bg-gray-50 text-gray-600';
+  }
 }
 
 /* =======================
@@ -185,14 +213,25 @@ function InterviewCard({ app }: any) {
 
   if (!interview) return null;
 
+  const interviewDate = new Date(interview.date);
+  const today = new Date();
+  const isDateOver = interviewDate < today;
+
   return (
-    <div className="border border-gray-200 rounded-xl p-5 bg-white">
+    <div className="border border-gray-200 rounded-xl p-5 bg-white relative">
+      {/* Date Over Badge */}
+      {isDateOver && (
+        <span className="absolute top-3 right-3 text-xs px-2 py-1 rounded-full bg-red-100 text-red-600 font-medium">
+          Date Over
+        </span>
+      )}
+      
       <h3 className="font-medium text-gray-900">{app.job?.title}</h3>
 
       <p className="text-sm text-gray-500 mb-3">{app.company?.name}</p>
 
       <div className="text-sm text-gray-600 space-y-1">
-        <p>📅 {new Date(interview.date).toLocaleDateString()}</p>
+        <p>📅 {interviewDate.toLocaleDateString()}</p>
 
         {interview.timeRange && (
           <p>

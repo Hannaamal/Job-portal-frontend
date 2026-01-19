@@ -22,6 +22,8 @@ export default function AdminDashboard() {
   const { stats, applications, jobStats, loading, error } = useSelector(
     (state: RootState) => state.adminDashboard
   );
+  
+  const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -37,8 +39,22 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6 ">
+       {/* Success Banner */}
+      {successMsg && (
+        <div className="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 px-4 py-3 rounded-md">
+          ✅ {successMsg}
+        </div>
+      )}
+
       
-      <TopBar value={company} onSearch={setCompany}  />
+      <TopBar
+  value={company}
+  onSearch={setCompany}
+  onSuccess={(msg) => {
+    setSuccessMsg(msg);
+    setTimeout(() => setSuccessMsg(""), 4000); // auto-hide
+  }}
+/>
 
       {/* STAT CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

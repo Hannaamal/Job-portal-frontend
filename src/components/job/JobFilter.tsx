@@ -27,25 +27,25 @@ export default function JobFilterRow() {
       label: "Job Type",
       paramKey: "jobType",
       options: ["Full-time", "Part-time", "Internship", "Contract"],
-      icon: <Briefcase size={16} />,
+      
     },
     {
       label: "Experience",
       paramKey: "experience",
       options: ["Fresher", "1-3", "3-5", "5+"],
-      icon: <User size={16} />,
+      
     },
     {
       label: "Salary",
       paramKey: "salary",
       options: ["20000-50000", "50000-100000", "100000-200000", "200000+"],
-      icon: <DollarSign size={16} />,
+     
     },
     {
       label: "Date Posted",
       paramKey: "datePosted",
       options: ["Today", "Last 3 days", "Last 7 days", "Last 30 days"],
-      icon: <Calendar size={16} />,
+   
     },
   ];
 
@@ -126,18 +126,6 @@ export default function JobFilterRow() {
         
         return (
           <div key={filter.paramKey} className="flex flex-col w-48">
-            <div className="flex items-center gap-2 mb-1">
-              <span className={`text-sm font-medium transition-colors duration-200 ${
-                isActive ? "text-blue-600" : "text-gray-600"
-              }`}>
-                {filter.label}
-              </span>
-              <div className={`transition-all duration-200 ${
-                isActive ? "text-blue-500 scale-110" : "text-gray-400"
-              }`}>
-                {filter.icon}
-              </div>
-            </div>
             <div className="relative group">
               <select
                 value={activeFilters[filter.paramKey] || ""}
@@ -146,17 +134,13 @@ export default function JobFilterRow() {
                 }
                 className={`appearance-none w-full transition-all duration-200 ${
                   isActive
-                    ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-300 shadow-lg shadow-blue-100/50 ring-1 ring-blue-200"
+                    ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-300 shadow-lg shadow-blue-100/50 ring-1 ring-blue-100"
                     : "bg-white border-gray-200 hover:border-gray-300"
                 } rounded-xl px-4 py-3 text-sm font-medium ${
                   isActive
                     ? "text-blue-700"
                     : "text-gray-700"
-                } group-hover:shadow-md focus:outline-none focus:ring-2 focus:border-transparent ${
-                  isActive
-                    ? "focus:ring-blue-400"
-                    : "focus:ring-blue-500"
-                }`}
+                } group-hover:shadow-md focus:outline-none focus:ring-2 focus:border-transparent `}
               >
                 <option value="">All {filter.label}</option>
 
@@ -214,7 +198,7 @@ export default function JobFilterRow() {
           }`}
         >
           <span
-            className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow transition-transform duration-300 ${
+            className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow transition-transform duration-300  cursor-pointer ${
               remoteOnly ? "translate-x-6" : ""
             }`}
           />
