@@ -13,12 +13,14 @@ import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/redux/store";
-import { loginUser, fetchMe } from "@/redux/authSlice";
 import api from "@/lib/api";
+import { useAuth } from "@/Context/AuthContext";
+import { loginUser, signupUser} from "@/redux/authSlice";
 
 export default function AuthPage() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const { refreshUser } = useAuth();
 
   const [isSignUp, setIsSignUp] = useState(false);
 
@@ -46,33 +48,36 @@ export default function AuthPage() {
   };
   /* ---------- LOGIN SUBMIT ---------- */
 
-  const handleLoginSubmit = async (e: FormEvent) => {
-    e.preventDefault();
 
-    try {
-      await api.post("/api/auth/login", loginForm);
+// LOGIN
+const handleLoginSubmit = async (e: FormEvent) => {
+  e.preventDefault();
 
-      // 🔥 FORCE HARD RELOAD
-      window.location.href = "/";
-    } catch (err: any) {
-      alert(err?.response?.data?.message || "Login failed");
-    }
-  };
+  try {
+    await dispatch(loginUser(loginForm)).unwrap(); // login via redux
+    await refreshUser(); // update auth context
+    router.push("/"); // navigate
+  } catch (err: any) {
+    alert(err || "Login failed");
+  }
+};
+
+
 
   /* ---------- REGISTER SUBMIT ---------- */
-  const handleRegisterSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  
+const handleRegisterSubmit = async (e: FormEvent) => {
+  e.preventDefault();
 
-    try {
-      // Call backend register API
-      await api.post("/api/auth/register", registerForm);
+  try {
+    await dispatch(signupUser(registerForm)).unwrap(); // register via redux
+    await refreshUser(); // update auth context
+    router.push("/"); // navigate
+  } catch (err: any) {
+    alert(err || "Registration failed");
+  }
+};
 
-      // ✅ Force a full reload so cookie is available to middleware & /me
-      window.location.href = "/";
-    } catch (err: any) {
-      alert(err?.response?.data?.message || "Registration failed");
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#eef2f5]">

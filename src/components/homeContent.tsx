@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "next/navigation";
 
@@ -10,7 +11,8 @@ import Pagination from "@mui/material/Pagination";
 
 import { fetchJobs, setSelectedJob } from "@/redux/jobs/jobsSlice";
 import type { RootState, AppDispatch } from "@/redux/store";
-import { fetchMe } from "@/redux/authSlice";
+import { useAuth } from "@/Context/AuthContext";
+
 
 export default function HomeContent() {
   const dispatch = useDispatch<AppDispatch>();
@@ -22,6 +24,7 @@ export default function HomeContent() {
  const { jobs, selectedJob, loading, error } = useSelector(
   (state: RootState) => state.jobs
 );
+const { refreshUser } = useAuth();
 
   const JOBS_PER_PAGE = 10;
   const [currentPage, setCurrentPage] = useState(1);
@@ -52,9 +55,12 @@ export default function HomeContent() {
     }
   }, [paginatedJobs, selectedJob, dispatch]);
 
-  useEffect(() => {
-    dispatch(fetchMe());
-  }, []);
+
+
+useEffect(() => {
+  refreshUser(); // context handles fetchMe internally
+}, [refreshUser]);
+
 
 
   const handlePageChange = (_: any, value: number) => {
