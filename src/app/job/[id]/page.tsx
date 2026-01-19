@@ -2,16 +2,18 @@ import type { Metadata } from "next";
 import JobById from "@/components/job/JobById";
 
 type PageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 export async function generateMetadata(
-  { params }: PageProps
+  props: PageProps
 ): Promise<Metadata> {
+  const { id } = await props.params; // ✅ REQUIRED in Next.js 15
+
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BACKEND_URL}/jobs/${params.id}`,
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}/job/${id}`,
     { cache: "no-store" }
   );
 
@@ -26,7 +28,7 @@ export async function generateMetadata(
   const companyName =
     typeof job.company === "object" ? job.company.name : job.company;
 
-  const jobUrl = `https://yourdomain.com/jobs/${params.id}`;
+  const jobUrl = `https://yourdomain.com/job/${id}`;
 
   return {
     title: `${job.title} at ${companyName}`,
@@ -38,10 +40,9 @@ export async function generateMetadata(
       siteName: "Your Job Portal",
       images: [
         {
-          url:
-            job.company?.logo
-              ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${job.company.logo}`
-              : "https://yourdomain.com/job-og.png",
+          url: job.company?.logo
+            ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${job.company.logo}`
+            : "https://yourdomain.com/job-og.png",
           width: 1200,
           height: 630,
         },

@@ -67,13 +67,10 @@ export default function AuthPage() {
       await dispatch(fetchMe()).unwrap();
 
       if (data.user.role === "admin") {
-        router.push("/admin/dashboard");
-         router.refresh();
+        window.location.href = "/admin/dashboard";
       } else {
-        router.push("/");
-         router.refresh();
+        window.location.href = "/";
       }
-
     } catch (err: any) {
       alert(err.message || "Login failed");
     }
@@ -89,7 +86,7 @@ export default function AuthPage() {
       const user = res.data.user;
 
       await dispatch(fetchMe()).unwrap();
-      router.push("/");
+      window.location.href = "/";
     } catch (err: any) {
       alert(err?.response?.data?.message || "Registration failed");
     }
