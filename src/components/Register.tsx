@@ -11,11 +11,10 @@ import {
 } from "@mui/material";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-
-import axios from "@/lib/api";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/redux/store";
 import { loginUser, fetchMe } from "@/redux/authSlice";
+import api from "@/lib/api";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -45,34 +44,18 @@ export default function AuthPage() {
   const handleRegisterChange = (e: ChangeEvent<HTMLInputElement>) => {
     setRegisterForm({ ...registerForm, [e.target.name]: e.target.value });
   };
-
   /* ---------- LOGIN SUBMIT ---------- */
+
   const handleLoginSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(loginForm),
-          credentials: "include",
-        }
-      );
+      await api.post("/api/auth/login", loginForm);
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-
-      await dispatch(fetchMe()).unwrap();
-
-      if (data.user.role === "admin") {
-        window.location.href = "/admin/dashboard";
-      } else {
-        window.location.href = "/";
-      }
+      // 🔥 FORCE HARD RELOAD
+      window.location.href = "/";
     } catch (err: any) {
-      alert(err.message || "Login failed");
+      alert(err?.response?.data?.message || "Login failed");
     }
   };
 
@@ -81,11 +64,10 @@ export default function AuthPage() {
     e.preventDefault();
 
     try {
-      const res = await axios.post("/api/auth/register", registerForm);
+      // Call backend register API
+      await api.post("/api/auth/register", registerForm);
 
-      const user = res.data.user;
-
-      await dispatch(fetchMe()).unwrap();
+      // ✅ Force a full reload so cookie is available to middleware & /me
       window.location.href = "/";
     } catch (err: any) {
       alert(err?.response?.data?.message || "Registration failed");

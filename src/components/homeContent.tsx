@@ -10,6 +10,7 @@ import Pagination from "@mui/material/Pagination";
 
 import { fetchJobs, setSelectedJob } from "@/redux/jobs/jobsSlice";
 import type { RootState, AppDispatch } from "@/redux/store";
+import { fetchMe } from "@/redux/authSlice";
 
 export default function HomeContent() {
   const dispatch = useDispatch<AppDispatch>();
@@ -50,6 +51,10 @@ export default function HomeContent() {
       dispatch(setSelectedJob(null));
     }
   }, [paginatedJobs, selectedJob, dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchMe());
+  }, []);
 
 
   const handlePageChange = (_: any, value: number) => {
