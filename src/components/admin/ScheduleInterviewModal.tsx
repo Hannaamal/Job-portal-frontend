@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import { scheduleInterviewThunk } from "@/redux/admin/interviewSlice";
+import toast from "react-hot-toast";
 
 
 type InterviewMode = "Walk-in" | "Slot-based";
@@ -78,18 +79,22 @@ export default function ScheduleInterviewModal({ jobId, onClose,onScheduled, }: 
 
 
   const handleSubmit = async () => {
-  const result = await dispatch(
-    scheduleInterviewThunk({
-      jobId,
-      data: form,
-    })
-  );
+    try {
+      const result = await dispatch(
+        scheduleInterviewThunk({ jobId, data: form })
+      );
 
-  if (scheduleInterviewThunk.fulfilled.match(result)) {
-    onScheduled(); // ✅ trigger refresh
-    onClose();
-  }
-};
+      if (scheduleInterviewThunk.fulfilled.match(result)) {
+        toast.success("Interview scheduled and emails sent to applicants!");
+        onScheduled();
+        onClose();
+      } else {
+        toast.error("Failed to schedule interview");
+      }
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+    }
+  };
 
 
   return (
