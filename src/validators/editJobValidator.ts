@@ -13,9 +13,16 @@ export const editJobSchema = yup.object({
     .required("Description is required")
     .min(20, "Description must be at least 20 characters"),
 
-  location: yup.string().trim().required("Location is required"),
+    isRemote: yup.boolean(),
+    
+  location: yup.string().when("isRemote", {
+      is: false,
+      then: (schema) =>
+        schema.required("Location is required for onsite jobs"),
+      otherwise: (schema) => schema.notRequired(),
+    }),
+  
 
-  isRemote: yup.boolean(),
 
   jobType: yup
     .string()

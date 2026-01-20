@@ -16,14 +16,12 @@ export const postJobSchema = yup.object({
   
   isRemote: yup.boolean(),
 
-location: yup
-    .string()
-    .trim()
-    .when("isRemote", (isRemote: any, schema: yup.StringSchema) => {
-      // Yup passes undefined sometimes, so use 'any'
-      return isRemote ? schema.nullable() : schema.required("Location is required for non-remote jobs");
-    }),
-
+ location: yup.string().when("isRemote", {
+    is: false,
+    then: (schema) =>
+      schema.required("Location is required for onsite jobs"),
+    otherwise: (schema) => schema.notRequired(),
+  }),
 
 
   jobType: yup

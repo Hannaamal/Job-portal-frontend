@@ -29,8 +29,6 @@ export default function PostJobSlideOver({
   onClose,
   onSuccess,
 }: PostJobSlideOverProps) {
-
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [skills, setSkills] = useState<any[]>([]);
@@ -39,16 +37,13 @@ export default function PostJobSlideOver({
   const today = new Date();
   const minDate = today.toISOString().split("T")[0]; // "YYYY-MM-DD"
 
-
   useEffect(() => {
-  if (!isOpen) {
-    setForm(initialFormState); // 🔥 reset form
-    setError("");
-    setLoading(false);
-  }
-}, [isOpen]);
-
-
+    if (!isOpen) {
+      setForm(initialFormState); // 🔥 reset form
+      setError("");
+      setLoading(false);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -142,9 +137,8 @@ export default function PostJobSlideOver({
       onClose();
       onSuccess(res.data.message || "Job posted successfully");
     } catch (err: any) {
-      if (err.name === "ValidationError")
-        {
-           console.log(err)
+      if (err.name === "ValidationError") {
+        console.log(err);
         // ✅ Yup errors
         setError(err.errors.join(", "));
       } else {
@@ -156,6 +150,14 @@ export default function PostJobSlideOver({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (form.isRemote) {
+      setForm((prev) => ({ ...prev, location: "Remote" }));
+    } else {
+      setForm((prev) => ({ ...prev, location: "" }));
+    }
+  }, [form.isRemote]);
 
   return (
     <div
@@ -233,8 +235,10 @@ export default function PostJobSlideOver({
                 name="location"
                 value={form.location}
                 onChange={handleChange}
-                placeholder="Bangalore"
-                className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2"
+                placeholder={form.isRemote ? "Remote" : "Bangalore"}
+                disabled={form.isRemote}
+                className={`w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2
+    ${form.isRemote ? "opacity-50 cursor-not-allowed" : ""}`}
               />
             </div>
 
@@ -389,7 +393,7 @@ export default function PostJobSlideOver({
               type="date"
               name="expiresAt"
               value={form.expiresAt}
-               min={minDate}  // set minimum date to today
+              min={minDate} // set minimum date to today
               onChange={handleChange}
               className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2"
             />

@@ -154,6 +154,14 @@ export default function EditJobSlideOver({
     }
   };
 
+  useEffect(() => {
+  if (form.isRemote) {
+    setForm((prev) => ({ ...prev, location: "Remote" }));
+  } else if (form.location === "Remote") {
+    setForm((prev) => ({ ...prev, location: "" }));
+  }
+}, [form.isRemote]);
+
   return (
     <div
       className={`fixed top-0 right-0 h-full w-full max-w-md bg-white
@@ -226,8 +234,9 @@ export default function EditJobSlideOver({
                 name="location"
                 value={form.location}
                 onChange={handleChange}
-                placeholder="Bangalore"
-                className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2"
+                disabled={form.isRemote}
+                className={`w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2
+    ${form.isRemote ? "opacity-50 cursor-not-allowed" : ""}`}
               />
             </div>
             <label className="flex items-center gap-2 mt-6 text-xs text-gray-600">
