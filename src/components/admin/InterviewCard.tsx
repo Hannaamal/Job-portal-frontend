@@ -94,7 +94,7 @@ function InterviewItem({
 export default function InterviewsCard() {
   const router = useRouter();
   const { stats, loading: dashboardLoading } = useSelector((state: RootState) => state.adminDashboard);
-  const { interviews } = useSelector((state: RootState) => state.adminInterviews);
+  const { interviews, loading: interviewsLoading } = useSelector((state: RootState) => state.adminInterviews);
   
   // Filter for upcoming interviews (date >= today) and sort by date
   const today = new Date();
@@ -126,7 +126,7 @@ export default function InterviewsCard() {
         </span>
       </div>
 
-      {dashboardLoading ? (
+      {(dashboardLoading || interviewsLoading) ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="animate-pulse">

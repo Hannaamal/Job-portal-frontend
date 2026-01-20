@@ -19,7 +19,7 @@ export default function MyApplicationsPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
-  const [activeTab, setActiveTab] = useState<"applied" | "interviews">(
+  const [activeTab, setActiveTab] = useState<"applied" | "shortlisted" | "rejected" | "interviews">(
     "applied"
   );
 
@@ -28,7 +28,15 @@ export default function MyApplicationsPage() {
   }, [dispatch]);
 
   const appliedJobs = myApplications.filter(
-    (app: any) => app.status !== "interview"
+    (app: any) => app.status === "applied"
+  );
+
+  const shortlistedJobs = myApplications.filter(
+    (app: any) => app.status === "shortlisted"
+  );
+
+  const rejectedJobs = myApplications.filter(
+    (app: any) => app.status === "rejected"
   );
 
   const interviews = myApplications.filter(
@@ -60,7 +68,7 @@ export default function MyApplicationsPage() {
       <div className="flex gap-8 border-b mb-8">
         <button
           onClick={() => setActiveTab("applied")}
-          className={`pb-3 text-sm font-medium ${
+          className={`pb-3 text-sm font-medium cursor-pointer ${
             activeTab === "applied"
               ? "border-b-2 border-blue-600 text-blue-600"
               : "text-gray-500"
@@ -70,8 +78,30 @@ export default function MyApplicationsPage() {
         </button>
 
         <button
+          onClick={() => setActiveTab("shortlisted")}
+          className={`pb-3 text-sm font-medium cursor-pointer ${
+            activeTab === "shortlisted"
+              ? "border-b-2 border-blue-600 text-blue-600"
+              : "text-gray-500"
+          }`}
+        >
+          Shortlisted ({shortlistedJobs.length})
+        </button>
+
+        <button
+          onClick={() => setActiveTab("rejected")}
+          className={`pb-3 text-sm font-medium cursor-pointer ${
+            activeTab === "rejected"
+              ? "border-b-2 border-blue-600 text-blue-600"
+              : "text-gray-500"
+          }`}
+        >
+          Rejected ({rejectedJobs.length})
+        </button>
+
+        <button
           onClick={() => setActiveTab("interviews")}
-          className={`pb-3 text-sm font-medium ${
+          className={`pb-3 text-sm font-medium cursor-pointer ${
             activeTab === "interviews"
               ? "border-b-2 border-blue-600 text-blue-600"
               : "text-gray-500"
@@ -137,6 +167,88 @@ export default function MyApplicationsPage() {
             onConfirm={handleConfirmWithdraw}
             onCancel={() => setConfirmOpen(false)}
           />
+        </div>
+      )}
+
+      {/* Shortlisted Jobs */}
+      {activeTab === "shortlisted" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {shortlistedJobs.length === 0 && (
+            <p className="text-gray-500 text-center col-span-full">
+              No shortlisted applications found.
+            </p>
+          )}
+
+          {shortlistedJobs.map((app: any) => (
+            <div
+              key={app._id}
+              onClick={() => router.push(`/job/${app.job._id}`)}
+              className="cursor-pointer border border-gray-200 rounded-xl p-5 bg-white hover:shadow-md transition flex flex-col justify-between"
+            >
+              <div>
+                <h3 className="font-semibold text-lg text-gray-900">
+                  {app.job?.title}
+                </h3>
+                <p className="text-sm text-gray-500 mb-2">
+                  {app.company?.name}
+                </p>
+                <p className="text-sm text-gray-600">📍 {app.job?.location}</p>
+                <span className={`inline-block mt-3 text-xs px-2 py-1 rounded-full ${getStatusColor(app.status)}`}>
+                  {app.status}
+                </span>
+              </div>
+
+              {/* Withdraw Button */}
+              {app.status === "shortlisted" && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleWithdrawClick(app._id);
+                  }}
+                  disabled={withdrawingId === app._id}
+                  className={`mt-5 text-sm border px-4 py-2 rounded-lg transition ${
+                    withdrawingId === app._id
+                      ? "border-gray-300 text-gray-400 cursor-not-allowed"
+                      : "border-gray-300 hover:border-red-500 hover:text-red-600"
+                  }`}
+                >
+                  {withdrawingId === app._id ? "Withdrawing..." : "Withdraw"}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Rejected Jobs */}
+      {activeTab === "rejected" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {rejectedJobs.length === 0 && (
+            <p className="text-gray-500 text-center col-span-full">
+              No rejected applications found.
+            </p>
+          )}
+
+          {rejectedJobs.map((app: any) => (
+            <div
+              key={app._id}
+              onClick={() => router.push(`/job/${app.job._id}`)}
+              className="cursor-pointer border border-gray-200 rounded-xl p-5 bg-white hover:shadow-md transition flex flex-col justify-between"
+            >
+              <div>
+                <h3 className="font-semibold text-lg text-gray-900">
+                  {app.job?.title}
+                </h3>
+                <p className="text-sm text-gray-500 mb-2">
+                  {app.company?.name}
+                </p>
+                <p className="text-sm text-gray-600">📍 {app.job?.location}</p>
+                <span className={`inline-block mt-3 text-xs px-2 py-1 rounded-full ${getStatusColor(app.status)}`}>
+                  {app.status}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -248,7 +360,7 @@ function InterviewCard({ app }: any) {
         {interview.location && <p>📍 {interview.location}</p>}
       </div>
 
-      {interview.meetingLink && (
+      {interview.medium === "Online" && interview.meetingLink && (
         <a
           href={interview.meetingLink}
           target="_blank"

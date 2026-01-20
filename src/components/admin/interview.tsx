@@ -140,6 +140,13 @@ export default function AdminInterviewPage() {
                   </button>
 
                   <button
+                    onClick={() => setSelectedJobId(job._id)}
+                    className="flex-1 border border-yellow-600 text-yellow-600 py-2 rounded-lg font-medium hover:bg-yellow-50 flex items-center justify-center gap-1"
+                  >
+                    Edit
+                  </button>
+
+                  <button
                     onClick={() => setConfirmCancelId(interview._id)}
                     className="flex-1 border border-red-600 text-red-600 py-2 rounded-lg font-medium hover:bg-red-50 flex items-center justify-center gap-1"
                   >

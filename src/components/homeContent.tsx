@@ -53,7 +53,7 @@ const { refreshUser } = useAuth();
     } else if (paginatedJobs.length === 0) {
       dispatch(setSelectedJob(null));
     }
-  }, [paginatedJobs, selectedJob, dispatch]);
+  }, [paginatedJobs, selectedJob, dispatch, keyword, location]);
 
 
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
-import { scheduleInterviewThunk } from "@/redux/admin/interviewSlice";
+import { scheduleInterviewThunk, getJobInterviewsThunk, updateInterviewThunk } from "@/redux/admin/interviewSlice";
 import toast from "react-hot-toast";
 
 
@@ -33,7 +33,7 @@ type Props = {
 
 export default function ScheduleInterviewModal({ jobId, onClose,onScheduled, }: Props) {
   const dispatch = useDispatch<AppDispatch>();
-  const { loading } = useSelector(
+  const { loading, interviews } = useSelector(
     (state: RootState) => state.adminInterviews
   );
 
@@ -50,6 +50,30 @@ export default function ScheduleInterviewModal({ jobId, onClose,onScheduled, }: 
     location: "",
     instructions: "",
   });
+
+  // Load existing interview data for editing
+  useEffect(() => {
+    const existingInterview = interviews.find((i) =>
+      typeof i.job === "string" ? i.job === jobId : i.job._id === jobId
+    );
+
+    if (existingInterview) {
+      setForm({
+        interviewMode: existingInterview.interviewMode,
+        medium: existingInterview.medium,
+        interviewType: existingInterview.interviewType,
+        date: existingInterview.date.split('T')[0], // Convert ISO to YYYY-MM-DD
+        timeRange: {
+          start: existingInterview.timeRange?.start || "",
+          end: existingInterview.timeRange?.end || "",
+        },
+        meetingLink: existingInterview.meetingLink || "",
+        location: existingInterview.location || "",
+        instructions: existingInterview.instructions || "",
+      });
+    }
+  }, [jobId, interviews]);
+
   const today = new Date();
   const minDate = today.toISOString().split("T")[0]; // "YYYY-MM-DD"
 
@@ -79,29 +103,46 @@ export default function ScheduleInterviewModal({ jobId, onClose,onScheduled, }: 
 
 
   const handleSubmit = async () => {
-    try {
-      const result = await dispatch(
-        scheduleInterviewThunk({ jobId, data: form })
-      );
+  try {
+    let result;
 
-      if (scheduleInterviewThunk.fulfilled.match(result)) {
-        toast.success("Interview scheduled and emails sent to applicants!");
-        onScheduled();
-        onClose();
-      } else {
-        toast.error("Failed to schedule interview");
-      }
-    } catch (error) {
-      toast.error("Something went wrong. Please try again.");
+    const existingInterview = interviews.find(
+      (i) => typeof i.job === "string" ? i.job === jobId : i.job._id === jobId
+    );
+
+    if (existingInterview) {
+      // Update
+      result = await dispatch(
+        updateInterviewThunk({ interviewId: existingInterview._id, data: form })
+      );
+    } else {
+      // Schedule new
+      result = await dispatch(scheduleInterviewThunk({ jobId, data: form }));
     }
-  };
+
+    if (updateInterviewThunk.fulfilled.match(result) || scheduleInterviewThunk.fulfilled.match(result)) {
+      toast.success(
+        existingInterview
+          ? "Interview updated successfully!"
+          : "Interview scheduled successfully!"
+      );
+      onScheduled();
+      onClose();
+    } else {
+      toast.error("Failed to save interview");
+    }
+  } catch (error) {
+    toast.error("Something went wrong. Please try again.");
+  }
+};
+
 
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white w-full max-w-lg rounded-xl p-6">
         <h2 className="text-xl font-semibold mb-4">
-          Schedule Interview
+          {interviews.find((i) => typeof i.job === "string" ? i.job === jobId : i.job._id === jobId) ? "Edit Interview" : "Schedule Interview"}
         </h2>
 
         {/* Interview Mode */}

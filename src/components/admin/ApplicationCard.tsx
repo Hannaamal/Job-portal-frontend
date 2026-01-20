@@ -38,14 +38,10 @@ export default function ApplicationsCard({ data }: ApplicationCardProps) {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-5">
+      <div className="grid grid-cols-2 gap-4 mb-5">
         <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
           <div className="text-2xl font-bold text-green-600">{totalReceived}</div>
           <div className="text-xs text-green-600 font-medium">Received</div>
-        </div>
-        <div className="text-center p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-          <div className="text-2xl font-bold text-yellow-600">{totalInterview}</div>
-          <div className="text-xs text-yellow-600 font-medium">Interviews</div>
         </div>
         <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
           <div className="text-2xl font-bold text-red-600">{totalRejected}</div>
