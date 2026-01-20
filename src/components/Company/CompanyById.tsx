@@ -37,9 +37,18 @@ export default function CompanyProfilePage() {
         <div className="flex items-center space-x-4">
           {/* Company Logo */}
           <img
-            src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${selectedCompany.logo}`}
+            src={
+              selectedCompany.logo && selectedCompany.logo !== ""
+                ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${selectedCompany.logo}`
+                : `${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads/logos/default_logo.jpg`
+            }
             alt={selectedCompany.name}
             className="w-24 h-24 object-cover rounded-full border"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.onerror = null; // Prevent infinite loop
+              target.src = `${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads/logos/default_logo.jpg`;
+            }}
           />
           <div>
             <h1 className="text-3xl font-bold">{selectedCompany.name}</h1>

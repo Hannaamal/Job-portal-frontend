@@ -62,11 +62,11 @@ export default function ApplicationsCard({ data }: ApplicationCardProps) {
               <div className="flex justify-between items-start">
                 <div>
                   <h4 className="font-medium text-gray-900 text-sm">{app.title}</h4>
-                  <p className="text-xs text-gray-600 mt-1">
+                  {/* <p className="text-xs text-gray-600 mt-1">
                     {app.applicant && app.applicant !== "Unknown" && app.applicant !== "Applicant details not available"
                       ? app.applicant 
                       : "Applicant details not available"}
-                  </p>
+                  </p> */}
                 </div>
               </div>
             </div>

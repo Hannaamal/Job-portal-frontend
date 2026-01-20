@@ -143,7 +143,7 @@ export default function Navbar() {
             {/* Notifications */}
             <Link
               href="/notifications"
-              className={`relative ${getIconButtonClass("/notifications")}`}
+              className={`relative ${getIconButtonClass("/notifications")} cursor-pointer`}
             >
               <NotificationsIcon className={getIconColor("/notifications")} />
               {unreadCount > 0 && (
@@ -157,7 +157,7 @@ export default function Navbar() {
             {/* Saved Jobs */}
             <button
               onClick={() => router.push("/saved-jobs")}
-              className={`relative p-2 rounded-full transition ${
+              className={`relative p-2 rounded-full transition cursor-pointer ${
                 pathname === "/saved-jobs" ? "bg-blue-600" : "hover:bg-gray-100"
               }`}
             >

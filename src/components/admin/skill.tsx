@@ -79,7 +79,7 @@ export default function SkillsPage() {
           {editId ? "Edit Skill" : "Add New Skill"}
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 cursor-pointer">
           <input
             placeholder="Skill name"
             value={name}
@@ -90,7 +90,7 @@ export default function SkillsPage() {
             placeholder="Category (optional)"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-400 outline-none shadow-sm"
+            className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-400 focus:border-green-400 outline-none shadow-sm cursor-pointer"
           />
         </div>
 

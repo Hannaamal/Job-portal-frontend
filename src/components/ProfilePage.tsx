@@ -18,8 +18,6 @@ export default function ProfilePage() {
   const profile = useSelector(selectProfile);
   const skills = useSelector(selectSkills);
 
-  console.log("RAW skills selector:", skills);
-  console.log("Is array?", Array.isArray(skills));
   const user = useSelector(selectUser);
   const [form, setForm] = useState<any>({
     phone: "",
@@ -152,21 +150,34 @@ export default function ProfilePage() {
       fd.append("resume", form.resume);
     }
     
-    console.log("FormData entries:");
+ 
     for (let [key, value] of fd.entries()) {
       console.log(key, value);
     }
     
-    try {
+      try {
       const result = await dispatch(updateMyProfile(fd)).unwrap();
-      console.log("Profile updated successfully:", result);
-      // Reset form avatar to the updated profile avatar
-      setForm((prev: any) => ({
-        ...prev,
-        avatar: result.profile?.avatar || ""
-      }));
+      
+      // Update the form with the updated profile data
+      setForm({
+        phone: result.profile?.phone || "",
+        location: result.profile?.location || "",
+        title: result.profile?.title || "",
+        experienceLevel: result.profile?.experienceLevel || "",
+        summary: result.profile?.summary || "",
+        skills: Array.isArray(result.profile?.skills)
+          ? result.profile.skills.map((s: any) => (typeof s === "string" ? s : s._id))
+          : [],
+        education: result.profile?.education || [],
+        experience: result.profile?.experience || [],
+        avatar: result.profile?.avatar || "",
+        resume: result.profile?.resume || null,
+      });
+      
+      // Refresh the page after successful update
+      window.location.reload();
     } catch (error: any) {
-      console.error("Profile update failed:", error);
+      
       setUploadError(error.message || "Failed to update profile. Please try again.");
     } finally {
       setUploading(false);
@@ -466,7 +477,7 @@ export default function ProfilePage() {
                 ],
               }))
             }
-            className="bg-blue-600 text-white px-2 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+            className="bg-green-600 text-white px-2 py-2 rounded-lg hover:bg-green-700 transition-colors shadow-md cursor-pointer"
           >
             + Add
           </button>
@@ -596,7 +607,7 @@ export default function ProfilePage() {
                 ],
               }))
             }
-            className="bg-green-600 text-white px-2 py-2 rounded-lg hover:bg-green-700 transition-colors shadow-md"
+            className="bg-green-600 text-white px-2 py-2 rounded-lg hover:bg-green-700 transition-colors shadow-md cursor-pointer"
           >
             + Add
           </button>

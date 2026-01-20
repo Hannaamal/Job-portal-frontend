@@ -55,7 +55,7 @@ export default function SubscribeButton({ companyId, initialSubscribed, onUnsubs
     <button
       onClick={handleClick}
       disabled={loading}
-      className={`px-4 py-1 rounded mt-3 transition-colors ${
+      className={`px-4 py-1 rounded mt-3 transition-colors cursor-pointer ${
         isSubscribed
           ? "bg-red-100 text-red-600 hover:bg-red-600 hover:text-white"
           : "bg-blue-600 text-white hover:bg-blue-700"
