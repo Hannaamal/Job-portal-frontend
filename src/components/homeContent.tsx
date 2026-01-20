@@ -74,7 +74,14 @@ useEffect(() => {
 }, [keyword, location]);
 
 
-  if (loading) return <div className="p-6">Loading jobs...</div>;
+  // Use a client-side flag to prevent hydration mismatch
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient || loading) return <div className="p-6">Loading jobs...</div>;
   if (error) return <div className="p-6 text-red-500">{error}</div>;
 
   return (
