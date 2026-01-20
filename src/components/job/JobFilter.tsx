@@ -140,7 +140,7 @@ export default function JobFilterRow() {
                   isActive
                     ? "text-blue-700"
                     : "text-gray-700"
-                } group-hover:shadow-md focus:outline-none focus:ring-2 focus:border-transparent `}
+                } group-hover:shadow-md focus:outline-none focus:ring-2 focus:border-transparent cursor-pointer`}
               >
                 <option value="">All {filter.label}</option>
 
