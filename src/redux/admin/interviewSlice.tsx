@@ -240,18 +240,31 @@ const interviewSchedulerSlice = createSlice({
       )
 
       /* ---------- CANCEL ---------- */
-      .addCase(
-        cancelInterviewThunk.fulfilled,
-        (state, action: PayloadAction<string>) => {
-          state.interviews = state.interviews.filter(
-            (i) => i._id !== action.payload
-          );
+      /* ---------- CANCEL ---------- */
+.addCase(cancelInterviewThunk.pending, (state) => {
+  state.loading = true;
+})
 
-          if (state.currentInterview?._id === action.payload) {
-            state.currentInterview = undefined;
-          }
-        }
-      );
+.addCase(
+  cancelInterviewThunk.fulfilled,
+  (state, action: PayloadAction<string>) => {
+    state.loading = false;
+
+    state.interviews = state.interviews.filter(
+      (i) => i._id !== action.payload
+    );
+
+    if (state.currentInterview?._id === action.payload) {
+      state.currentInterview = undefined;
+    }
+  }
+)
+
+.addCase(cancelInterviewThunk.rejected, (state, action) => {
+  state.loading = false;
+  state.error = action.payload as string;
+});
+
   },
 });
 

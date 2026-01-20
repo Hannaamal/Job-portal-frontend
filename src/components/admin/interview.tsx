@@ -226,6 +226,8 @@ export default function AdminInterviewPage() {
               cancelInterviewThunk({ interviewId: confirmCancelId })
             ).unwrap();
 
+            
+
             alert("Interview cancelled successfully");
             setConfirmCancelId(null);
           } catch (err: any) {
