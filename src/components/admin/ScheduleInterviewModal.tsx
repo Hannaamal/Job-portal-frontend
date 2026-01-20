@@ -27,9 +27,10 @@ interface FormState {
 type Props = {
   jobId: string;
   onClose: () => void;
+  onScheduled: () => void;
 };
 
-export default function ScheduleInterviewModal({ jobId, onClose }: Props) {
+export default function ScheduleInterviewModal({ jobId, onClose,onScheduled, }: Props) {
   const dispatch = useDispatch<AppDispatch>();
   const { loading } = useSelector(
     (state: RootState) => state.adminInterviews
@@ -74,16 +75,22 @@ export default function ScheduleInterviewModal({ jobId, onClose }: Props) {
     }
   };
 
-  const handleSubmit = async () => {
-    await dispatch(
-      scheduleInterviewThunk({
-        jobId,
-        data: form,
-      })
-    );
 
+
+  const handleSubmit = async () => {
+  const result = await dispatch(
+    scheduleInterviewThunk({
+      jobId,
+      data: form,
+    })
+  );
+
+  if (scheduleInterviewThunk.fulfilled.match(result)) {
+    onScheduled(); // ✅ trigger refresh
     onClose();
-  };
+  }
+};
+
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">

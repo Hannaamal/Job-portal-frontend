@@ -5,6 +5,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchSubscriptions } from "@/redux/company/companySlice";
 import { RootState, AppDispatch } from "@/redux/store";
 import SubscribeButton from "@/components/Company/SubscribeButton";
+import { useRouter } from "next/navigation";
+
+const ITEMS_PER_PAGE = 6;
 
 export default function SubscriptionsPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -13,6 +16,9 @@ export default function SubscriptionsPage() {
   const { subscriptions: reduxSubscriptions, loading } = useSelector(
     (state: RootState) => state.company
   );
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const router = useRouter();
 
   // Local state to manage immediate updates
   const [subscriptions, setSubscriptions] = useState(reduxSubscriptions);
@@ -38,14 +44,22 @@ export default function SubscriptionsPage() {
   if (!subscriptions.length)
     return <p className="p-6 text-center">You have no active subscriptions.</p>;
 
+  const totalPages = Math.ceil(subscriptions.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const currentCompanies = subscriptions.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
+
   return (
     <div className="p-6 grid grid-cols-2 md:grid-cols-3 gap-6">
-      {subscriptions.map((sub: any) => {
+      {currentCompanies.map((sub: any) => {
         const company = sub.company;
         return (
           <div
             key={company._id}
-            className="border rounded-xl p-4 shadow-md flex flex-col items-center text-center transition-all duration-300"
+            onClick={() => router.push(`/companies/${company._id}`)}
+            className="border rounded-xl p-4 shadow-md flex flex-col items-center text-center transition-all duration-300 cursor-pointer hover:shadow-lg"
           >
             {/* Company Logo */}
             <div className="w-24 h-24 mb-4">
@@ -65,14 +79,62 @@ export default function SubscriptionsPage() {
             <p className="text-sm text-gray-500 mb-3">{company.location}</p>
 
             {/* Subscribe/Unsubscribe Button */}
-            <SubscribeButton
-              companyId={company._id}
-              initialSubscribed={true} // all listed here are active subscriptions
-              onUnsubscribe={() => handleUnsubscribe(company._id)} // remove card immediately
-            />
+            <div onClick={(e) => e.stopPropagation()} className="mt-3">
+              <SubscribeButton
+                companyId={company._id}
+                initialSubscribed={true}
+                onUnsubscribe={() => handleUnsubscribe(company._id)}
+              />
+            </div>
           </div>
         );
       })}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex justify-center items-center gap-2 flex-wrap">
+          {/* Prev */}
+          <button
+            onClick={() => setCurrentPage((p) => p - 1)}
+            disabled={currentPage === 1}
+            className={`px-4 py-2 rounded-lg ${
+              currentPage === 1
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-white text-gray-700 hover:bg-blue-500 hover:text-white shadow"
+            }`}
+          >
+            Prev
+          </button>
+
+          {/* Page numbers */}
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <button
+              key={page}
+              onClick={() => setCurrentPage(page)}
+              className={`px-4 py-2 rounded-lg transition ${
+                page === currentPage
+                  ? "bg-blue-600 text-white shadow scale-105"
+                  : "bg-white text-gray-700 hover:bg-blue-500 hover:text-white shadow"
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+
+          {/* Next */}
+          <button
+            onClick={() => setCurrentPage((p) => p + 1)}
+            disabled={currentPage === totalPages}
+            className={`px-4 py-2 rounded-lg ${
+              currentPage === totalPages
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-white text-gray-700 hover:bg-blue-500 hover:text-white shadow"
+            }`}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }

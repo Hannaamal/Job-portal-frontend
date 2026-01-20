@@ -73,19 +73,12 @@ export const scheduleInterviewThunk = createAsyncThunk<
       `/api/admin/interview/jobs/${jobId}/interviews`,
       data
     );
-    
-    // Update application status to "interview" after scheduling
-    await api.put(`/api/admin/application/jobs/${jobId}/status`, {
+
+    // Update job status to "interview" after scheduling
+    await api.put(`/api/admin/application/applications/jobs/${jobId}/status`, {
       status: "interview"
     });
     
-    // Refresh applications to update the UI
-    const applicationsRes = await api.get("/api/admin/application/applications");
-    dispatch({ type: "adminApplications/fetch/fulfilled", payload: applicationsRes.data });
-    
-    // Refresh interviews to update the UI
-    const interviewsRes = await api.get(`/api/admin/interview/job/${jobId}`);
-    dispatch({ type: "interview/getByJob/fulfilled", payload: interviewsRes.data });
     
     return res.data.interview;
   } catch (err: any) {

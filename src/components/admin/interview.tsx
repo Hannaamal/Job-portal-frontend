@@ -29,25 +29,25 @@ export default function AdminInterviewPage() {
   const [cancelLoading, setCancelLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState(""); // For job title search
   const [companyFilter, setCompanyFilter] = useState(""); // For company name filter
-  
-  useEffect(() => {
-      dispatch(fetchAdminJobs());
-    }, [dispatch]);
 
-    useEffect(() => {
-        jobs.forEach((job) => {
-            console.log("Jobs from Redux:", jobs);
-            dispatch(getJobInterviewsThunk({ jobId: job._id }));
-        });
+  useEffect(() => {
+    dispatch(fetchAdminJobs());
+  }, [dispatch]);
+
+  useEffect(() => {
+    jobs.forEach((job) => {
+      console.log("Jobs from Redux:", jobs);
+      dispatch(getJobInterviewsThunk({ jobId: job._id }));
+    });
   }, [dispatch, jobs]);
 
   const getInterviewForJob = (jobId: string) => {
     return interviews.find((i) =>
       typeof i.job === "string" ? i.job === jobId : i.job._id === jobId
     );
-};
+  };
 
-const filteredJobs = jobs.filter((job) => {
+  const filteredJobs = jobs.filter((job) => {
     const matchesTitle = job.title
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
@@ -58,12 +58,12 @@ const filteredJobs = jobs.filter((job) => {
 
     return matchesTitle && matchesCompany;
   });
-  
+
   const indexOfLastJob = currentPage * itemsPerPage;
   const indexOfFirstJob = indexOfLastJob - itemsPerPage;
   const currentJobs = filteredJobs.slice(indexOfFirstJob, indexOfLastJob);
   const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
-  
+
   const companyOptions = Array.from(
     new Set(
       jobs
@@ -76,7 +76,7 @@ const filteredJobs = jobs.filter((job) => {
     <div className="p-6">
       <h1 className="text-2xl font-semibold mb-6">Interview Scheduling</h1>
 
-     <div className="flex items-center gap-4 mb-6">
+      <div className="flex items-center gap-4 mb-6">
         <input
           type="text"
           placeholder="Search job by title..."
@@ -197,6 +197,9 @@ const filteredJobs = jobs.filter((job) => {
         <ScheduleInterviewModal
           jobId={selectedJobId}
           onClose={() => setSelectedJobId(null)}
+          onScheduled={() => {
+            dispatch(getJobInterviewsThunk({ jobId: selectedJobId }));
+          }}
         />
       )}
 
