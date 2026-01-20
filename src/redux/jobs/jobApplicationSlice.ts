@@ -13,15 +13,24 @@ export const checkJobApplied = createAsyncThunk<
 
 export const applyForJob = createAsyncThunk<
   JobApplication,
-  { jobId: string; resume: File; experience: string },
+  { jobId: string; resume?: File; resumeUrl?: string; experience: string },
   { rejectValue: string }
 >(
   "jobApplication/applyForJob",
-  async ({ jobId, resume, experience }, { rejectWithValue }) => {
+  async ({ jobId, resume, resumeUrl, experience }, { rejectWithValue }) => {
     try {
       const formData = new FormData();
-      formData.append("resume", resume);
-      formData.append("experience", experience); // 👈 VERY IMPORTANT
+      
+      // Add resume - either uploaded file or existing resume URL
+      if (resume) {
+        // User uploaded a new file
+        formData.append("resume", resume);
+      } else if (resumeUrl) {
+        // User wants to use existing resume - add the URL
+        formData.append("resumeUrl", resumeUrl);
+      }
+      
+      formData.append("experience", experience);
 
       // DO NOT set Content-Type manually ✅
       const res = await api.post(`api/application/apply/${jobId}`, formData);
