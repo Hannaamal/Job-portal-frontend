@@ -109,7 +109,7 @@ export default function ProfilePage() {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
       return `${backendUrl}${form.avatar}`;
     }
-    return "/default-avatar.png";
+    return "/default_avatar.png";
   }, [form.avatar, profile?.avatar]);
 
   const handleSubmit = async () => {
