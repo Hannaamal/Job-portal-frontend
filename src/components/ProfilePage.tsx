@@ -449,7 +449,7 @@ export default function ProfilePage() {
                 <button
                   key={skill._id}
                   onClick={() => toggleSkill(skill._id)}
-                  className={`px-3 py-1 rounded-full text-sm border transition ${
+                  className={`px-3 py-1 rounded-full text-sm border transition cursor-pointer ${
                     selected
                       ? "bg-green-600 text-white border-green-600"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
