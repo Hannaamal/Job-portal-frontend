@@ -1,7 +1,7 @@
 "use client";
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import api from "@/lib/api";
+import { apiRequest } from "@/lib/apiManager";
 
 interface AuthState {
   user: any | null;
@@ -26,8 +26,8 @@ export const signupUser = createAsyncThunk(
   "auth/signup",
   async (formData: any, { rejectWithValue }) => {
     try {
-      const res = await api.post("/api/auth/register", formData);
-      return res.data.user; // backend sends user
+      const res = await apiRequest.post<{ user: any }>("/api/auth/register", formData);
+      return res.user; // backend sends user
     } catch (err: any) {
       return rejectWithValue(
         err.response?.data?.message || "Signup failed"
@@ -43,8 +43,8 @@ export const loginUser = createAsyncThunk(
   "auth/login",
   async (formData: any, { rejectWithValue }) => {
     try {
-      const res = await api.post("/api/auth/login", formData);
-      return res.data.user; 
+      const res = await apiRequest.post<{ user: any }>("/api/auth/login", formData);
+      return res.user; 
     } catch (err: any) {
       return rejectWithValue(
         err.response?.data?.message 
@@ -60,8 +60,8 @@ export const fetchMe = createAsyncThunk(
   "auth/me",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await api.get("/api/auth/me");
-      return res.data.user;
+      const res = await apiRequest.get<{ user: any }>("/api/auth/me");
+      return res.user;
     } catch {
       return rejectWithValue("Not authenticated");
     }
@@ -75,7 +75,7 @@ export const logoutUser = createAsyncThunk(
   "auth/logout",
   async (_, { rejectWithValue }) => {
     try {
-      await api.post("/api/auth/logout"); // backend clears cookie
+      await apiRequest.post("/api/auth/logout"); // backend clears cookie
       return true;
     } catch (err: any) {
       return rejectWithValue(

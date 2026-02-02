@@ -3,6 +3,7 @@ import "./globals.css";
 import ReduxProvider from "@/components/ReduxProvider";
 import AppNavbar from "@/components/NavbarWrap";
 import { AuthProvider } from "@/Context/AuthContext";
+import ErrorBoundary from "@/components/common/ErrorBoundary";
 
 
 
@@ -26,9 +27,11 @@ export default function RootLayout({
         
         <ReduxProvider>
            <AuthProvider> 
-             <AppNavbar> 
-              {children}
-             </AppNavbar> 
+             <ErrorBoundary>
+               <AppNavbar> 
+                 {children}
+               </AppNavbar> 
+             </ErrorBoundary>
            </AuthProvider> 
         </ReduxProvider>
       </body>

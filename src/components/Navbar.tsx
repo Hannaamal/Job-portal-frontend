@@ -48,14 +48,7 @@ export default function Navbar() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
-  // Fetch notifications, saved jobs, and profile only when logged in
-  useEffect(() => {
-    if (isAuthenticated) {
-      dispatch(fetchNotifications());
-      dispatch(fetchSavedJobs());
-      dispatch(fetchMyProfile());
-    }
-  }, [dispatch, isAuthenticated]);
+  // Data fetching is now handled in AuthContext to prevent race conditions
 
   // Prevent flicker
   if (loading) {

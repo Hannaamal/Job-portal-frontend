@@ -6,16 +6,15 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Add interceptor OUTSIDE axios.create()
-// api.interceptors.request.use((config) => {
-//  const token = Cookies.get("auth_token"); // FIXED
+// Add interceptor for authentication tokens
+api.interceptors.request.use((config) => {
+  const token = Cookies.get("auth_token");
+  
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
 
-//   if (token) {
-//     config.headers.Authorization = `Bearer ${token}`;
-//   }
-
-//   return config;
-// });
+  return config;
+});
 
 export default api;
-

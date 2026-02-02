@@ -38,12 +38,20 @@ const { refreshUser } = useAuth();
 
   // 🔥 FETCH JOBS WHEN SEARCH CHANGES
   useEffect(() => {
-    dispatch(
-      fetchJobs({
-        keyword,
-        location,
-      })
-    );
+    const fetchJobsData = async () => {
+      try {
+        await dispatch(
+          fetchJobs({
+            keyword,
+            location,
+          })
+        ).unwrap();
+      } catch (error) {
+        console.error('Failed to fetch jobs:', error);
+      }
+    };
+    
+    fetchJobsData();
   }, [dispatch, keyword, location]);
 
   // AUTO SELECT FIRST JOB (only when no job is selected)
